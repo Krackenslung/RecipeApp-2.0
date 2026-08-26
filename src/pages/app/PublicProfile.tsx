@@ -1,0 +1,138 @@
+import { useEffect, useRef } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { RecipeCard } from '@/components/recipe/RecipeCard';
+import { Button } from '@/components/ui/Button';
+import { EmptyState, ErrorState, SkeletonGrid } from '@/components/ui/states';
+import { flattenPages, useRecipeSearch } from '@/queries/useRecipeSearch';
+import {
+  useFollowCounts,
+  useIsFollowing,
+  useProfileByUsername,
+  useToggleFollow,
+} from '@/queries/useProfile';
+import { useUserCollections } from '@/queries/useCollections';
+import { useAuth } from '@/context/AuthProvider';
+import { EMPTY_FILTERS } from '@/utils/filterArgs';
+
+export default function PublicProfile() {
+  const { username } = useParams<{ username: string }>();
+  const { data: profile, isLoading, isError, error, refetch } = useProfileByUsername(username);
+  const { user } = useAuth();
+
+  const query = useRecipeSearch(EMPTY_FILTERS, profile?.id);
+  const recipes = flattenPages(query.data?.pages);
+  const { data: counts } = useFollowCounts(profile?.id);
+  const { data: following } = useIsFollowing(profile?.id);
+  const toggleFollow = useToggleFollow(profile?.id ?? '');
+  const { data: collections } = useUserCollections(profile?.id);
+
+  const sentinel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && query.hasNextPage && !query.isFetchingNextPage) {
+        void query.fetchNextPage();
+      }
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [query]);
+
+  if (isLoading) return <SkeletonGrid />;
+
+  if (isError) {
+    const notFound = error instanceof Error && error.message === 'NOT_FOUND';
+    return notFound ? (
+      <EmptyState title="No encontramos a esa persona" />
+    ) : (
+      <ErrorState onRetry={() => void refetch()} />
+    );
+  }
+
+  if (!profile) return null;
+  const isSelf = user?.id === profile.id;
+
+  return (
+    <div className="flex flex-col gap-8">
+      <header className="flex flex-wrap items-start gap-5">
+        <div className="h-20 w-20 shrink-0 overflow-hidden border border-ceniza/25 bg-cal">
+          {profile.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center font-display text-3xl font-black text-ceniza/30">
+              {(profile.display_name ?? profile.username).slice(0, 1).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col gap-2">
+          <h1 className="font-display text-3xl font-black tracking-tight text-comal">
+            {profile.display_name ?? profile.username}
+          </h1>
+          <p className="font-mono text-sm text-ceniza">@{profile.username}</p>
+          {profile.bio && <p className="max-w-xl text-sm text-comal">{profile.bio}</p>}
+
+          <dl className="flex gap-5 font-mono text-xs text-ceniza">
+            <div className="flex gap-1">
+              <dt>Seguidores</dt>
+              <dd className="text-comal">{counts?.followers ?? '—'}</dd>
+            </div>
+            <div className="flex gap-1">
+              <dt>Sigue a</dt>
+              <dd className="text-comal">{counts?.following ?? '—'}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {user && !isSelf && (
+          <Button
+            variant={following ? 'secondary' : 'primary'}
+            size="sm"
+            loading={toggleFollow.isPending}
+            onClick={() => toggleFollow.mutate(Boolean(following))}
+          >
+            {following ? 'Siguiendo' : 'Seguir'}
+          </Button>
+        )}
+      </header>
+
+      {collections && collections.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-xl font-black tracking-tight text-comal">Colecciones</h2>
+          <ul className="flex flex-wrap gap-2">
+            {collections.map((c) => (
+              <li key={c.collection_id}>
+                <Link
+                  to={`/c/${c.collection_id}`}
+                  className="inline-flex border border-ceniza/30 px-3 py-1.5 text-sm text-ceniza transition-colors hover:border-comal hover:text-comal"
+                >
+                  {c.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-xl font-black tracking-tight text-comal">Recetas</h2>
+
+        {query.isLoading ? (
+          <SkeletonGrid />
+        ) : recipes.length === 0 ? (
+          <EmptyState title="Todavía no ha publicado nada" />
+        ) : (
+          <>
+            <div className="grid animate-fade-in grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {recipes.map((r) => (
+                <RecipeCard key={r.recipe_id} recipe={r} />
+              ))}
+            </div>
+            <div ref={sentinel} className="h-12" aria-hidden />
+          </>
+        )}
+      </section>
+    </div>
+  );
+}

@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-masa:      #F0E6D2;
+  --color-comal:     #1C1917;
+  --color-guajillo:  #A63A24;
+  --color-tomatillo: #6B7F3A;
+  --color-cal:       #FAF7F0;
+  --color-ceniza:    #78716C;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body:    "Inter", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", monospace;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-masa);
+    color: var(--color-comal);
+    font-family: var(--font-body);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+
+  /* Quantities, times and costs are data. Tabular figures keep them aligned. */
+  .font-mono,
+  [class*="font-mono"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-guajillo);
+    outline-offset: 2px;
+  }
+
+  /* Native <dialog> — Tailwind styles the element, this handles the backdrop. */
+  dialog::backdrop {
+    background-color: color-mix(in srgb, var(--color-comal) 55%, transparent);
+  }
+
+  dialog {
+    margin: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  /* The one shared motion primitive: filter results cross-fade in. */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 180ms ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in { animation: none; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
