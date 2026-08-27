@@ -62,7 +62,7 @@ export const router = createBrowserRouter([
         element: <RequireAuth />,
         children: [
           { path: '/generate', element: page(<Generate />) },
-          // Not in FRONTEND.md's route table, but build order step 7 calls for
+          // Not in the original route table, but build order step 7 calls for
           // recipe edit — the detail page links here for the author.
           { path: '/r/:slug/edit', element: page(<RecipeEditor />) },
           { path: '/me', element: page(<MyRecipes />) },

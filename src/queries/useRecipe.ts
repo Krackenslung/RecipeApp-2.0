@@ -63,7 +63,7 @@ export function useRecipe(slug: string | undefined) {
   });
 }
 
-// view_count is "incremented by the app" per schema.md, but RLS only allows a
+// view_count is "incremented by the app" per README.md, but RLS only allows a
 // user to update their own recipes — so it needs a security-definer RPC that
 // does not exist yet. Deliberately not called from here until it does.
 

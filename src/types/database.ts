@@ -5,10 +5,10 @@
  *     --schema app --schema catalog --schema recipe --schema social \
  *     > src/types/database.ts
  *
- * This copy was written by hand from schema.md so the frontend could be built
- * before the migrations exist. It is deliberately narrow: it covers the tables,
- * views and functions the client actually touches. The `ai` schema is absent on
- * purpose — it is never exposed to PostgREST.
+ * This copy was written by hand from the data model in README.md so the frontend
+ * could be built before the migrations exist. It is deliberately narrow: it
+ * covers the tables, views and functions the client actually touches. The `ai`
+ * schema is absent on purpose — it is never exposed to PostgREST.
  */
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];

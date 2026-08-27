@@ -14,7 +14,7 @@ type Props = {
 
 /**
  * From RecipeCard.css, with one deliberate departure: the card carries
- * `shadow-card`. UI-MIGRATION.md §3 asks for no shadow; this is an explicit
+ * `shadow-card`. The 1.0 port originally asked for no shadow; this is an explicit
  * override, so the shadow is a token rather than a one-off class.
  */
 export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
