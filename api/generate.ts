@@ -119,6 +119,39 @@ const RESPONSE_SCHEMA = {
 
 const env = (name: string, fallback?: string) => process.env[name] ?? fallback;
 
+/* ---------------------------------------------------------------------------
+ * TEMPORARY — diagnostic instrumentation.
+ *
+ * This block makes the function report its real failure instead of a generic
+ * message. Remove it, and restore the generic 500s, once /generate works: a raw
+ * error names columns, constraints and function signatures, which is exactly
+ * what the generic messages exist to withhold.
+ *
+ * Nothing here can print a secret. Every string that leaves the function goes
+ * through redact() first, which blanks the literal value of each key. The
+ * Gemini key was already out of reach — it travels in the x-goog-api-key
+ * header, never in the URL, so it cannot appear in a fetch error.
+ * ------------------------------------------------------------------------- */
+
+const SECRETS = (): string[] =>
+  [
+    process.env.GEMINI_API_KEY,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    process.env.SUPABASE_ANON_KEY,
+    process.env.VITE_SUPABASE_ANON_KEY,
+  ].filter((v): v is string => Boolean(v) && v!.length > 8);
+
+function redact(text: unknown): string {
+  let out = typeof text === 'string' ? text : String(text ?? '');
+  for (const secret of SECRETS()) out = out.split(secret).join('[redacted]');
+  return out;
+}
+
+/** Checkpoint log. The last one printed before a failure is where it died. */
+function step(name: string, detail?: Record<string, unknown>) {
+  console.log(`[generate] step: ${name}`, detail ? redact(JSON.stringify(detail)) : '');
+}
+
 /**
  * Slugs are generated here, not by the model: recipes.slug carries a unique
  * index and a model asked twice for "pozole rojo" will happily answer with the
@@ -293,6 +326,19 @@ class GenerationFailure extends Error {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
+    await run(req, res);
+  } catch (err) {
+    // TEMPORARY — see the diagnostic block above.
+    const e = err as { message?: string; stack?: string };
+    console.error('generate failed:', redact(e?.message), redact(e?.stack));
+    if (!res.headersSent) {
+      res.status(500).json({ error: redact(e?.message) || 'Unhandled error.' });
+    }
+  }
+}
+
+async function run(req: VercelRequest, res: VercelResponse) {
   // Explicit, so that a 405 from here is distinguishable from the one Vercel
   // returns when a POST falls through the SPA rewrite onto index.html.
   if (req.method !== 'POST') {
@@ -314,12 +360,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       serviceKey: Boolean(serviceKey),
       geminiKey: Boolean(geminiKey),
     });
-    return res.status(500).json({ error: 'The generator is not configured.' });
+    // TEMPORARY — the names of the missing variables, never their values.
+    const missing = [
+      !supabaseUrl && 'SUPABASE_URL / VITE_SUPABASE_URL',
+      !anonKey && 'SUPABASE_ANON_KEY / VITE_SUPABASE_ANON_KEY',
+      !serviceKey && 'SUPABASE_SERVICE_ROLE_KEY',
+      !geminiKey && 'GEMINI_API_KEY',
+    ].filter(Boolean);
+    return res
+      .status(500)
+      .json({ error: `The generator is not configured. Missing: ${missing.join(', ')}` });
   }
 
   // --- 1. Who is calling ------------------------------------------------------
   // This is a public URL protected by nothing else. Everything below depends on
   // this block having succeeded.
+  step('env ok');
+
   const authHeader = req.headers.authorization ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Sign in to generate recipes.' });
@@ -335,6 +392,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Your session expired. Sign in again.' });
   }
   const userId = userData.user.id;
+  step('caller verified', { userId });
 
   const body = (typeof req.body === 'string' ? safeParse(req.body) : req.body) as {
     prompt?: string;
@@ -345,6 +403,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const filters: Filters = body?.filters ?? {};
 
   // Only now, with the caller established, does service_role come out.
+  step('input parsed', { promptLength: prompt.length, filterKeys: Object.keys(filters).length });
+
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -361,7 +421,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (beginError || !begun) {
     console.error('[generate] gen_begin', beginError);
-    return res.status(500).json({ error: 'We couldn’t start the generation.' });
+    // TEMPORARY — the raw PostgREST error. A missing function reads as
+    // PGRST202 here, which is the difference between "not deployed" and
+    // "deployed and broken".
+    return res.status(500).json({
+      error: `gen_begin failed: ${redact(beginError?.message)}`,
+      code: beginError?.code ?? null,
+      hint: redact(beginError?.hint ?? ''),
+    });
   }
 
   const begin = begun as { over_quota: boolean; remaining: number; request_id?: string };
@@ -376,6 +443,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const requestId = begin.request_id!;
+  step('request row open', { requestId, remaining: begin.remaining });
 
   // The screen wants a request_id in under a second. Everything past this point
   // is reported through ai.generation_requests, which the client polls via
@@ -385,7 +453,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // --- 4 to 6. The slow half --------------------------------------------------
   const startedAt = Date.now();
   try {
+    step('calling gemini', { model: MODEL });
     const { parsed, raw, tokensIn, tokensOut } = await callGemini(geminiKey, buildPrompt(prompt, filters));
+    step('gemini parsed', { tokensIn, tokensOut });
 
     const payload = parsed as { recipe?: Record<string, unknown> };
     if (!payload?.recipe?.title) {
@@ -395,6 +465,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     payload.recipe.slug = slugify(String(payload.recipe.title));
     payload.recipe.language = payload.recipe.language ?? 'es';
 
+    step('persisting', { slug: payload.recipe.slug });
     const { error: persistError } = await db.rpc('gen_succeed', {
       p_request_id: requestId,
       p_author_id: userId,
