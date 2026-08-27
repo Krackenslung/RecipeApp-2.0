@@ -90,7 +90,8 @@ const SOCKET_GRACE_MS = 4_000;
  */
 export function useGenerationStatus(requestId: string | null) {
   const qc = useQueryClient();
-  const [row, setRow] = useState<GenerationRow | null>(null);
+  const [rows, setRows] = useState<GenerationRow[]>([]);
+  const row = rows[0] ?? null;
   const [error, setError] = useState<string | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const startedAt = useRef<number>(0);
@@ -101,9 +102,11 @@ export function useGenerationStatus(requestId: string | null) {
 
   const fetchStatus = useCallback(async (id: string) => {
     try {
-      const rows = unwrap(await recipeDb.rpc('get_generation_status', { p_request_id: id }));
-      const first = Array.isArray(rows) ? rows[0] : rows;
-      if (first) setRow(first as GenerationRow);
+      const result = unwrap(await recipeDb.rpc('get_generation_status', { p_request_id: id }));
+      // get_generation_status returns setof, so this is already an array today
+      // even though it only ever holds one row.
+      const list = (Array.isArray(result) ? result : [result]).filter(Boolean) as GenerationRow[];
+      if (list.length) setRows(list);
     } catch (e) {
       console.error('[generation] status', e);
       setError('We couldn’t read the generation status.');
@@ -121,7 +124,7 @@ export function useGenerationStatus(requestId: string | null) {
 
   useEffect(() => {
     if (!requestId) {
-      setRow(null);
+      setRows([]);
       setError(null);
       setElapsedMs(0);
       startedAt.current = 0;
@@ -176,5 +179,7 @@ export function useGenerationStatus(requestId: string | null) {
     if (done) qc.invalidateQueries({ queryKey: ['recipes'] });
   }, [done, qc]);
 
-  return { row, status: row?.status ?? null, done, error, elapsedMs };
+  // `rows` is the shape callers should build against; `row` is the convenience
+  // for the current one-recipe-per-request reality.
+  return { row, rows, status: row?.status ?? null, done, error, elapsedMs };
 }

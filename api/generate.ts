@@ -42,6 +42,19 @@ const realtimeTransport: RealtimeOptions | undefined =
     : undefined;
 
 const MODEL = 'gemini-2.5-flash';
+
+/**
+ * Cover art. Strictly optional, and treated as such everywhere below: it runs
+ * only if the clock allows, every failure is swallowed, and the recipe is
+ * persisted whether or not an image exists. RecipeCard already falls back to
+ * no_recipe_image.png, so "no picture" is a supported state, not a broken one.
+ *
+ * As of writing this returns 429 RESOURCE_EXHAUSTED on the free tier — image
+ * models are billing-only. The code path is live regardless, so enabling
+ * billing is the only step needed to start getting pictures.
+ */
+const IMAGE_MODEL = 'gemini-2.5-flash-image';
+const IMAGE_BUDGET_MS = 15_000;
 const DAILY_LIMIT = 20;
 /**
  * These three are one decision, not three, and they have to stay ordered:
@@ -59,7 +72,15 @@ const GEMINI_TIMEOUT_MS = 45_000; // one attempt
 const PERSIST_RESERVE_MS = 8_000; // never start an attempt without this much left
 const MAX_ATTEMPTS = 3;
 
-type Db = ReturnType<ReturnType<typeof createClient>['schema']>;
+function serviceClient(url: string, key: string) {
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    ...(realtimeTransport ? { realtime: realtimeTransport } : {}),
+  });
+}
+
+type Admin = ReturnType<typeof serviceClient>;
+type Db = ReturnType<Admin['schema']>;
 
 /**
  * Structurally the client's RecipeFilters. Declared here rather than imported
@@ -364,6 +385,111 @@ async function callGemini(apiKey: string, prompt: string, deadline: number): Pro
   throw new GenerationFailure('failed', lastError);
 }
 
+/**
+ * One attempt, no retries. This is garnish: spending the retry budget on it
+ * would come out of the recipe's own time, and a recipe without a photo is
+ * worth far more than a photo without a recipe.
+ *
+ * Returns null on every failure — quota, timeout, safety refusal, a response
+ * with no image in it. The caller does not branch on why.
+ */
+async function generateImage(
+  apiKey: string,
+  title: string,
+  deadline: number,
+): Promise<{ bytes: Buffer; mime: string } | null> {
+  const remaining = deadline - Date.now();
+  if (remaining < 3_000) {
+    step('image skipped', { reason: 'no time left' });
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.min(IMAGE_BUDGET_MS, remaining));
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text:
+                    `Fotografía cenital de "${title}", plato terminado y servido, ` +
+                    'sobre una mesa sencilla, luz natural suave, estilo fotografía ' +
+                    'de comida editorial. Sin texto, sin marcas de agua, sin manos.',
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      // 429 is the expected answer on a free-tier key: image models are
+      // billing-only. Logged at info level because it is a plan limit, not a
+      // bug, and it would otherwise cry wolf on every single generation.
+      step('image unavailable', { status: res.status });
+      return null;
+    }
+
+    const body = (await res.json()) as Record<string, any>;
+    const parts: Array<Record<string, any>> = body?.candidates?.[0]?.content?.parts ?? [];
+    const inline = parts.find((p) => p?.inlineData?.data)?.inlineData;
+
+    if (!inline?.data) {
+      step('image missing from response', { finish: body?.candidates?.[0]?.finishReason });
+      return null;
+    }
+
+    return {
+      bytes: Buffer.from(inline.data as string, 'base64'),
+      mime: (inline.mimeType as string) || 'image/png',
+    };
+  } catch (e) {
+    step('image failed', { reason: redact(String(e)) });
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Uploads to the bucket and returns a public URL, or null.
+ *
+ * The {user_id}/... path prefix is what the storage policy reads, so it is kept
+ * even though service_role would bypass that policy: the day this moves to a
+ * user-scoped client, the path is already right. The filename is a random uuid
+ * because the bucket is public and predictable paths are enumerable.
+ */
+async function uploadCover(
+  admin: Admin,
+  userId: string,
+  recipeId: string,
+  image: { bytes: Buffer; mime: string },
+): Promise<string | null> {
+  const ext = image.mime.includes('jpeg') ? 'jpg' : image.mime.includes('webp') ? 'webp' : 'png';
+  const path = `${userId}/${recipeId}/${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await admin.storage
+    .from('recipe-images')
+    .upload(path, image.bytes, { contentType: image.mime, upsert: false });
+
+  if (error) {
+    console.error('[generate] cover upload', redact(error.message));
+    return null;
+  }
+
+  return admin.storage.from('recipe-images').getPublicUrl(path).data.publicUrl;
+}
+
 class GenerationFailure extends Error {
   constructor(
     readonly status: 'failed' | 'filtered' | 'busy',
@@ -455,10 +581,7 @@ async function run(req: VercelRequest, res: VercelResponse) {
   // Only now, with the caller established, does service_role come out.
   step('input parsed', { promptLength: prompt.length, filterKeys: Object.keys(filters).length });
 
-  const admin = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    ...(realtimeTransport ? { realtime: realtimeTransport } : {}),
-  });
+  const admin = serviceClient(supabaseUrl, serviceKey);
   const db = admin.schema('recipe');
 
   // --- 2 & 3. Quota and the request row, in one statement ---------------------
@@ -513,7 +636,7 @@ async function run(req: VercelRequest, res: VercelResponse) {
     // .catch is the outermost net: if anything in runGeneration — including its
     // own catch block — throws, this keeps it from becoming an unhandled
     // rejection inside waitUntil.
-    runGeneration(db, requestId, userId, prompt, filters, geminiKey).catch((e) => {
+    runGeneration(admin, db, requestId, userId, prompt, filters, geminiKey).catch((e) => {
       console.error('[generate] runGeneration escaped', requestId, redact(String(e)));
     }),
   );
@@ -529,6 +652,7 @@ async function run(req: VercelRequest, res: VercelResponse) {
  * silently by the platform.
  */
 async function runGeneration(
+  admin: Admin,
   db: Db,
   requestId: string,
   userId: string,
@@ -556,8 +680,13 @@ async function runGeneration(
     payload.recipe.slug = slugify(String(payload.recipe.title));
     payload.recipe.language = payload.recipe.language ?? 'es';
 
-    step('persisting', { slug: payload.recipe.slug });
-    const { error: persistError } = await db.rpc('gen_succeed', {
+    // Art before persistence, so the card has its picture the first time the
+    // client renders it rather than popping in a poll later. Bounded by the
+    // same deadline, and null on any failure.
+    const image = await generateImage(geminiKey, String(payload.recipe.title), deadline);
+
+    step('persisting', { slug: payload.recipe.slug, withImage: Boolean(image) });
+    const { data: saved, error: persistError } = await db.rpc('gen_succeed', {
       p_request_id: requestId,
       p_author_id: userId,
       p_payload: payload,
@@ -571,6 +700,24 @@ async function runGeneration(
       console.error('[generate] gen_succeed', persistError);
       await fail(db, requestId, 'failed', 'The recipe could not be saved.', raw, startedAt);
       return;
+    }
+
+    const recipeId = (saved as { recipe_id?: string } | null)?.recipe_id;
+
+    // The cover is patched on afterwards rather than travelling in the payload:
+    // persist_generation does not carry cover_image_url, and changing its
+    // signature would mean another migration applied by hand against a database
+    // that already differs from these files. An UPDATE needs neither.
+    if (image && recipeId) {
+      const url = await uploadCover(admin, userId, recipeId, image);
+      if (url) {
+        const { error: coverError } = await db
+          .from('recipes')
+          .update({ cover_image_url: url })
+          .eq('recipe_id', recipeId);
+        if (coverError) console.error('[generate] cover update', redact(coverError.message));
+        else step('cover attached');
+      }
     }
 
     step('done', { elapsedMs: Date.now() - startedAt });

@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { FilterSidebar } from '@/components/layout/FilterSidebar';
 import { TwoPaneLayout } from '@/components/layout/TwoPaneLayout';
 import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/states';
+import { GeneratedCard } from '@/components/recipe/GeneratedCard';
+import { useRecipeCards } from '@/queries/useRecipe';
 import { useToast } from '@/components/ui/Toast';
 import {
   GenerationError,
@@ -34,15 +36,34 @@ export default function Generate() {
   const [prompt, setPrompt] = useState('');
   const [requestId, setRequestId] = useState<string | null>(null);
 
+  // Everything this session has produced, newest first. Session-only by
+  // design: the recipes themselves are drafts and /me already lists them, so
+  // persisting this would duplicate a screen that exists.
+  const [producedIds, setProducedIds] = useState<string[]>([]);
+
   const start = useStartGeneration();
-  const { row, done, elapsedMs, error: statusError } = useGenerationStatus(requestId);
-  const navigate = useNavigate();
+  const { row, rows, done, elapsedMs, error: statusError } = useGenerationStatus(requestId);
+  const { data: cards } = useRecipeCards(producedIds);
   const { toast } = useToast();
+
+  // A generation yields one recipe today, but the status RPC returns a set and
+  // this reads all of it — the day one request produces several, the list fills
+  // up on its own.
+  useEffect(() => {
+    if (!done) return;
+    const ids = rows.filter((r) => r.status === 'success' && r.recipe_id).map((r) => r.recipe_id!);
+    if (!ids.length) return;
+    setProducedIds((prev) => [...ids.filter((id) => !prev.includes(id)), ...prev]);
+  }, [done, rows]);
 
   const quotaError = start.error instanceof GenerationError && start.error.overQuota
     ? start.error
     : null;
   const running = requestId != null && !done;
+
+  const orderedCards = producedIds
+    .map((id) => cards?.find((c) => c.recipe_id === id))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c));
 
   function submit() {
     start.mutate(
@@ -139,33 +160,41 @@ export default function Generate() {
           </div>
         )}
 
-        {done && row?.status === 'success' && (
-          <div className="flex flex-col gap-3 rounded-card border border-success bg-surface px-5 py-6">
-            <h2 className="text-xl font-semibold text-ink">Ready, as a draft</h2>
-            <p className="text-sm text-body">
-              The model proposes, you publish. Look it over and decide whether to make it public.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="primary"
-                onClick={() => {
-                  if (row.recipe_slug) navigate(`/r/${row.recipe_slug}`);
-                  else navigate('/me');
-                }}
-              >
-                View the recipe
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setRequestId(null);
-                  start.reset();
-                }}
-              >
-                Generate another
-              </Button>
+        {orderedCards.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-xl font-semibold text-ink">
+                {orderedCards.length === 1 ? 'Ready, as a draft' : `${orderedCards.length} drafts`}
+              </h2>
+              {done && row?.status === 'success' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setRequestId(null);
+                    start.reset();
+                  }}
+                >
+                  Generate another
+                </Button>
+              )}
             </div>
-          </div>
+
+            <p className="text-sm text-body">
+              The model proposes, you publish. Open one to look it over and decide whether to make
+              it public.
+            </p>
+
+            {/* A list, not a grid: one recipe per generation today, and a
+                column reads as results rather than as a second feed. */}
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              {orderedCards.map((recipe) => (
+                <li key={recipe.recipe_id}>
+                  <GeneratedCard recipe={recipe} />
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {done && row && row.status !== 'success' && (

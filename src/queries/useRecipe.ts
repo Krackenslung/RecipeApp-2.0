@@ -132,3 +132,27 @@ export function useDeleteRecipe() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
   });
 }
+
+/**
+ * The cards for a set of recipe ids, straight out of vw_recipe_cards — the same
+ * shape the feed renders, so a generated recipe and a browsed one are the same
+ * kind of thing to the UI.
+ *
+ * Takes a list rather than a single id on purpose: a generation yields one
+ * recipe today, and this is the seam where several would arrive.
+ *
+ * The recipes are draft/private at this point. The author can still read them —
+ * the select policy on recipe.recipes covers `author_id = auth.uid()` — so no
+ * special path is needed for freshly generated rows.
+ */
+export function useRecipeCards(recipeIds: string[]) {
+  const key = [...recipeIds].sort().join(',');
+  return useQuery({
+    queryKey: ['recipes', 'cards', key],
+    enabled: recipeIds.length > 0,
+    queryFn: async () =>
+      unwrap(
+        await recipeDb.from('vw_recipe_cards').select('*').in('recipe_id', recipeIds),
+      ),
+  });
+}
