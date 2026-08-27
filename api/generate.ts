@@ -487,7 +487,14 @@ async function run(req: VercelRequest, res: VercelResponse) {
   // The promise is passed already invoked, and deliberately not awaited —
   // awaiting it here would put the slow half back in front of the response and
   // undo the whole design.
-  waitUntil(runGeneration(db, requestId, userId, prompt, filters, geminiKey));
+  waitUntil(
+    // .catch is the outermost net: if anything in runGeneration — including its
+    // own catch block — throws, this keeps it from becoming an unhandled
+    // rejection inside waitUntil.
+    runGeneration(db, requestId, userId, prompt, filters, geminiKey).catch((e) => {
+      console.error('[generate] runGeneration escaped', requestId, redact(String(e)));
+    }),
+  );
 }
 
 /**
@@ -559,7 +566,23 @@ async function runGeneration(
   }
 }
 
-/** The response is already sent by the time this runs, so it can only log. */
+/**
+ * The response is already sent by the time this runs, so it can only log — but
+ * it MUST land. A request left at 'pending' spins the generation screen
+ * forever, with nothing in the row to say why, and no path back except the user
+ * giving up. That failure mode is worse than the failure it is reporting.
+ *
+ * So this never throws, and it tries three times:
+ *   1 & 2. the real call, because db.rpc can reject outright (DNS, socket) and
+ *          not merely return { error } — a throw here would escape into the
+ *          waitUntil promise and leave the row exactly as described above.
+ *   3.     the same call with p_raw dropped, in case the raw response is
+ *          itself what PostgREST is choking on. A row that says 'failed' with
+ *          no payload still unblocks the screen; a perfect row that never
+ *          writes does not.
+ *
+ * gen_fail's signature is untouched: same five parameters, same order.
+ */
 async function fail(
   db: Db,
   requestId: string,
@@ -568,14 +591,33 @@ async function fail(
   raw: unknown,
   startedAt: number,
 ) {
-  const { error } = await db.rpc('gen_fail', {
-    p_request_id: requestId,
-    p_status: status,
-    p_error: message,
-    p_raw: raw ?? null,
-    p_latency_ms: Date.now() - startedAt,
-  });
-  if (error) console.error('[generate] gen_fail', error);
+  const attempts: Array<unknown> = [raw ?? null, raw ?? null, null];
+
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      const { error } = await db.rpc('gen_fail', {
+        p_request_id: requestId,
+        p_status: status,
+        p_error: message,
+        p_raw: attempts[i],
+        p_latency_ms: Date.now() - startedAt,
+      });
+
+      if (!error) {
+        if (i > 0) step('gen_fail recorded on retry', { attempt: i + 1 });
+        return;
+      }
+      console.error(`[generate] gen_fail attempt ${i + 1}`, redact(error.message));
+    } catch (e) {
+      // db.rpc rejected rather than returning an error. Without this catch the
+      // rejection escapes runGeneration and the row stays pending.
+      console.error(`[generate] gen_fail threw on attempt ${i + 1}`, redact(String(e)));
+    }
+  }
+
+  // Nothing else to try. The row is still pending and the screen will spin;
+  // this log is the only remaining trace of why.
+  console.error('[generate] gen_fail EXHAUSTED — request stays pending', requestId);
 }
 
 function safeParse(s: string): unknown {
