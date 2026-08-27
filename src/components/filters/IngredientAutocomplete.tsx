@@ -1,7 +1,15 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useIngredientNames, useIngredientSearch } from '@/queries/useIngredientSearch';
 import { RemovableChip } from '@/components/ui/Chip';
+import {
+  FIELD_CONTROL,
+  FIELD_LABEL,
+  GROUP_BUTTON,
+  GROUP_INPUT,
+  SUGGESTION_ITEM,
+  SUGGESTION_LIST,
+} from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/states';
 import { cx } from '@/utils/cx';
 
@@ -68,19 +76,13 @@ export function IngredientAutocomplete({
 
   return (
     <div ref={boxRef} className="flex flex-col gap-2">
-      <label
-        htmlFor={`${listId}-input`}
-        className="text-xs font-medium uppercase tracking-wide text-ceniza"
-      >
+      <label htmlFor={`${listId}-input`} className={FIELD_LABEL}>
         {label}
       </label>
 
-      <div className="relative">
-        <Search
-          size={15}
-          aria-hidden
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ceniza"
-        />
+      {/* Input welded to a `+`, as in v1. The button commits the highlighted
+          suggestion, which is what Enter already does. */}
+      <div className="relative flex">
         <input
           id={`${listId}-input`}
           role="combobox"
@@ -112,34 +114,38 @@ export function IngredientAutocomplete({
               setOpen(false);
             }
           }}
-          className="w-full border border-ceniza/35 bg-cal py-2 pl-8 pr-8 text-sm text-comal placeholder:text-ceniza/70 focus:border-comal focus:outline-none"
+          className={cx(FIELD_CONTROL, GROUP_INPUT, isFetching && 'pr-8')}
         />
         {isFetching && (
-          <Spinner className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
+          <Spinner className="absolute right-14 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
         )}
 
+        <button
+          type="button"
+          aria-label={`Agregar a ${label.toLowerCase()}`}
+          disabled={options.length === 0}
+          onClick={() => {
+            const hit = options[active] ?? options[0];
+            if (hit) add(hit.ingredient_id);
+          }}
+          className={GROUP_BUTTON}
+        >
+          <Plus size={16} aria-hidden />
+        </button>
+
         {open && options.length > 0 && (
-          <ul
-            id={listId}
-            role="listbox"
-            className="absolute z-30 mt-1 max-h-56 w-full overflow-auto border border-ceniza/30 bg-cal"
-          >
+          <ul id={listId} role="listbox" className={cx(SUGGESTION_LIST, 'top-full')}>
             {options.map((hit, i) => (
               <li key={hit.ingredient_id} role="option" aria-selected={i === active}>
                 <button
                   type="button"
                   onMouseEnter={() => setActive(i)}
                   onClick={() => add(hit.ingredient_id)}
-                  className={cx(
-                    'flex w-full items-center justify-between px-3 py-2 text-left text-sm',
-                    i === active ? 'bg-masa text-comal' : 'text-ceniza',
-                  )}
+                  className={cx(SUGGESTION_ITEM, i === active && 'bg-hairline text-ink')}
                 >
                   {hit.name}
                   {!hit.is_verified && (
-                    <span className="text-[10px] uppercase tracking-wide text-ceniza/70">
-                      sin verificar
-                    </span>
+                    <span className="text-xs text-muted">sin verificar</span>
                   )}
                 </button>
               </li>

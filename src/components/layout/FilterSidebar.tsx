@@ -1,11 +1,25 @@
 import { Search, X } from 'lucide-react';
 import { useCatalog } from '@/queries/useCatalog';
 import { Button } from '@/components/ui/Button';
+import { Checkbox, FIELD_CONTROL, FIELD_LABEL } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/states';
 import { TagGroup } from '@/components/filters/TagGroup';
 import { IngredientAutocomplete } from '@/components/filters/IngredientAutocomplete';
-import { CostField, RangeField, ServingsRange } from '@/components/filters/RangeField';
+import { RangeField, ServingsRange } from '@/components/filters/RangeField';
 import { countActive, EMPTY_FILTERS, type RecipeFilters } from '@/utils/filterArgs';
+import { cx } from '@/utils/cx';
+
+/**
+ * v1 showed cost as three buttons, not a slider; the RPC still wants a number,
+ * so each level is a cap. Tuned for MXN — move them here, not at the call site.
+ */
+const COST_LEVELS: { label: string; cap: number }[] = [
+  { label: '$', cap: 100 },
+  { label: '$$', cap: 250 },
+  { label: '$$$', cap: 600 },
+];
+
+const DIFFICULTY_LABELS = ['Fácil', 'Media', 'Difícil'] as const;
 
 type Props = {
   /** The sidebar edits `draft`. Only `applied` ever reaches the query key. */
@@ -49,12 +63,12 @@ export function FilterSidebar({
       }}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="font-display text-lg font-black tracking-tight text-comal">Filtros</h2>
+        <h2 className="text-lg font-semibold text-ink">Filtros</h2>
         {active > 0 && (
           <button
             type="button"
             onClick={onReset}
-            className="inline-flex items-center gap-1 text-xs text-ceniza transition-colors hover:text-comal"
+            className="inline-flex items-center gap-1 text-xs text-body transition-colors hover:text-ink"
           >
             <X size={12} aria-hidden />
             Limpiar {active}
@@ -63,23 +77,20 @@ export function FilterSidebar({
       </div>
 
       {seeded && (
-        <p className="border border-tomatillo/35 px-3 py-2 text-xs text-tomatillo">
+        <p className="rounded-card border border-success px-3 py-2 text-xs text-success">
           Pre-llenamos dietas y alérgenos con tus preferencias. Puedes quitarlos.
         </p>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="filter-search"
-          className="text-xs font-medium uppercase tracking-wide text-ceniza"
-        >
+      <div>
+        <label htmlFor="filter-search" className={FIELD_LABEL}>
           Buscar
         </label>
         <div className="relative">
           <Search
-            size={15}
+            size={16}
             aria-hidden
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ceniza"
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted"
           />
           <input
             id="filter-search"
@@ -87,13 +98,13 @@ export function FilterSidebar({
             value={draft.search}
             placeholder="pozole, tinga…"
             onChange={(e) => set('search', e.target.value)}
-            className="w-full border border-ceniza/35 bg-cal py-2 pl-8 pr-3 text-sm text-comal placeholder:text-ceniza/70 focus:border-comal focus:outline-none"
+            className={cx(FIELD_CONTROL, 'pl-8')}
           />
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-ceniza">
+        <div className="flex items-center gap-2 text-sm text-body">
           <Spinner />
           Cargando catálogo…
         </div>
@@ -183,12 +194,29 @@ export function FilterSidebar({
         format={(n) => `${n} kcal`}
       />
 
-      <CostField
-        value={draft.maxCost}
-        onChange={(v) => set('maxCost', v)}
-        perServing={draft.costPerServing}
-        onPerServingChange={(v) => set('costPerServing', v)}
-      />
+      <fieldset className="flex flex-col gap-2">
+        <legend className={FIELD_LABEL}>Costo máximo</legend>
+        <div className="flex gap-1.5">
+          {COST_LEVELS.map(({ label, cap }) => (
+            <Button
+              key={label}
+              type="button"
+              size="sm"
+              variant={draft.maxCost === cap ? 'success' : 'secondary'}
+              aria-pressed={draft.maxCost === cap}
+              onClick={() => set('maxCost', draft.maxCost === cap ? null : cap)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <Checkbox
+          label={<span className="text-xs text-muted">Por porción, no por receta</span>}
+          checked={draft.costPerServing}
+          disabled={draft.maxCost == null}
+          onChange={(v) => set('costPerServing', v)}
+        />
+      </fieldset>
 
       <ServingsRange
         min={draft.minServings}
@@ -197,24 +225,19 @@ export function FilterSidebar({
       />
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-xs font-medium uppercase tracking-wide text-ceniza">
-          Dificultad máxima
-        </legend>
+        <legend className={FIELD_LABEL}>Dificultad máxima</legend>
         <div className="flex gap-1.5">
           {([1, 2, 3] as const).map((d) => (
-            <button
+            <Button
               key={d}
               type="button"
+              size="sm"
+              variant={draft.maxDifficulty === d ? 'primary' : 'secondary'}
               aria-pressed={draft.maxDifficulty === d}
               onClick={() => set('maxDifficulty', draft.maxDifficulty === d ? null : d)}
-              className={
-                draft.maxDifficulty === d
-                  ? 'border border-comal bg-comal px-3 py-1 text-sm text-cal'
-                  : 'border border-ceniza/30 px-3 py-1 text-sm text-ceniza transition-colors hover:border-comal hover:text-comal'
-              }
             >
-              {['Fácil', 'Media', 'Difícil'][d - 1]}
-            </button>
+              {DIFFICULTY_LABELS[d - 1]}
+            </Button>
           ))}
         </div>
       </fieldset>
@@ -229,7 +252,7 @@ export function FilterSidebar({
         format={(n) => `${n} ★`}
       />
 
-      <div className="sticky bottom-4 flex flex-col gap-2 bg-masa pt-2">
+      <div className="sticky bottom-0 flex flex-col gap-2 bg-surface pb-1 pt-2">
         <Button type="submit" variant="primary" loading={searching} disabled={!dirty && !searching}>
           {dirty ? 'Buscar' : 'Resultados al día'}
         </Button>

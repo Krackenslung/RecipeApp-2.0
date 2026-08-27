@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { FilterSidebar } from '@/components/layout/FilterSidebar';
+import { TwoPaneLayout } from '@/components/layout/TwoPaneLayout';
 import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/states';
@@ -54,10 +55,10 @@ export default function Generate() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[17rem_1fr]">
-      <aside>
-        {/* The same sidebar as the feed. On failure the filters stay put, so
-            retrying is one click. */}
+    <TwoPaneLayout
+      filters={
+        // The same sidebar as the feed. On failure the filters stay put, so
+        // retrying is one click.
         <FilterSidebar
           draft={filters}
           onDraftChange={setFilters}
@@ -66,42 +67,48 @@ export default function Generate() {
           dirty={!running}
           searching={start.isPending || running}
         />
-      </aside>
-
+      }
+      footer={
+        // v1's footer area: what you type and the button that fires it, pinned
+        // under the results so it never scrolls away.
+        <div className="flex flex-col gap-3">
+          <TextArea
+            label="¿Algo más?"
+            placeholder="Para la cena, algo que aguante el recalentado…"
+            hint={`${countActive(filters)} ${countActive(filters) === 1 ? 'filtro activo' : 'filtros activos'}`}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            disabled={running}
+          />
+          <div className="flex justify-end">
+            <Button
+              variant="primary"
+              size="lg"
+              loading={start.isPending}
+              disabled={running}
+              onClick={submit}
+            >
+              <Sparkles size={16} aria-hidden />
+              Generar
+            </Button>
+          </div>
+        </div>
+      }
+    >
       <section className="flex flex-col gap-6">
         <header>
-          <h1 className="font-display text-3xl font-black tracking-tight text-comal">
-            Generar una receta
-          </h1>
-          <p className="mt-1 max-w-xl text-sm text-ceniza">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">Generar una receta</h1>
+          <p className="mt-1 max-w-xl text-sm text-body">
             Elige lo que tienes y lo que no quieres. Lo que salga es tuyo, en borrador, hasta que
             decidas publicarlo.
           </p>
         </header>
 
-        <TextArea
-          label="¿Algo más?"
-          placeholder="Para la cena, algo que aguante el recalentado…"
-          hint={`${countActive(filters)} ${countActive(filters) === 1 ? 'filtro activo' : 'filtros activos'}`}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={running}
-        />
-
-        {!running && !done && (
-          <div>
-            <Button variant="primary" size="lg" loading={start.isPending} onClick={submit}>
-              <Sparkles size={16} aria-hidden />
-              Generar
-            </Button>
-          </div>
-        )}
-
         {quotaError && (
-          <p className="border border-guajillo/40 px-4 py-3 text-sm text-comal">
+          <p className="rounded-card border border-brand bg-surface px-4 py-3 text-sm text-body">
             {quotaError.message}
             {quotaError.quotaRemaining != null && (
-              <span className="ml-1 font-mono text-ceniza">
+              <span className="ml-1 font-mono text-muted">
                 (te quedan {quotaError.quotaRemaining})
               </span>
             )}
@@ -109,35 +116,33 @@ export default function Generate() {
         )}
 
         {start.isError && !quotaError && (
-          <p className="border border-guajillo/40 px-4 py-3 text-sm text-comal">
+          <p className="rounded-card border border-brand bg-surface px-4 py-3 text-sm text-body">
             {start.error.message}
           </p>
         )}
 
         {running && (
-          <div className="flex flex-col gap-3 border border-ceniza/25 bg-cal px-5 py-6">
+          <div className="flex flex-col gap-3 rounded-card border border-line-strong bg-surface px-5 py-6">
             <div className="flex items-center gap-3">
               <Spinner />
               {/* No fake progress bar. Real elapsed seconds and what is
                   happening — the job takes 20–30s and the user has a clock. */}
-              <p className="text-sm text-comal">{phaseFor(elapsedMs)}</p>
-              <span className="ml-auto font-mono text-sm text-ceniza">
+              <p className="text-sm text-body">{phaseFor(elapsedMs)}</p>
+              <span className="ml-auto font-mono text-sm text-muted">
                 {formatElapsed(elapsedMs)}
               </span>
             </div>
-            <p className="text-xs text-ceniza">
+            <p className="text-xs text-muted">
               Normalmente tarda entre 20 y 30 segundos. Puedes dejar esta pestaña abierta.
             </p>
-            {statusError && <p className="text-xs text-guajillo">{statusError}</p>}
+            {statusError && <p className="text-xs text-brand">{statusError}</p>}
           </div>
         )}
 
         {done && row?.status === 'success' && (
-          <div className="flex flex-col gap-3 border border-tomatillo/45 bg-cal px-5 py-6">
-            <h2 className="font-display text-xl font-black tracking-tight text-comal">
-              Lista, en borrador
-            </h2>
-            <p className="text-sm text-ceniza">
+          <div className="flex flex-col gap-3 rounded-card border border-success bg-surface px-5 py-6">
+            <h2 className="text-xl font-semibold text-ink">Lista, en borrador</h2>
+            <p className="text-sm text-body">
               El modelo propone, tú publicas. Revísala y decide si la haces pública.
             </p>
             <div className="flex gap-2">
@@ -164,11 +169,11 @@ export default function Generate() {
         )}
 
         {done && row && row.status !== 'success' && (
-          <div className="flex flex-col gap-3 border border-guajillo/40 bg-cal px-5 py-6">
-            <h2 className="font-display text-lg font-black tracking-tight text-guajillo">
+          <div className="flex flex-col gap-3 rounded-card border border-brand bg-surface px-5 py-6">
+            <h2 className="text-lg font-semibold text-brand">
               {row.status === 'filtered' ? 'El modelo no quiso responder' : 'No salió'}
             </h2>
-            <p className="text-sm text-ceniza">
+            <p className="text-sm text-body">
               {row.status === 'filtered'
                 ? 'Prueba con otra combinación de filtros.'
                 : 'Algo falló del otro lado. Tus filtros siguen puestos.'}
@@ -188,14 +193,14 @@ export default function Generate() {
           </div>
         )}
 
-        <p className="text-xs text-ceniza">
+        <p className="text-xs text-muted">
           ¿Prefieres escribirla tú?{' '}
-          <Link to="/me" className="text-guajillo underline">
+          <Link to="/me" className="text-brand no-underline hover:underline">
             Crea una receta a mano
           </Link>
           .
         </p>
       </section>
-    </div>
+    </TwoPaneLayout>
   );
 }

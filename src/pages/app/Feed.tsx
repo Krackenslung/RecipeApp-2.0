@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
 import { FilterSidebar } from '@/components/layout/FilterSidebar';
+import { TwoPaneLayout } from '@/components/layout/TwoPaneLayout';
 import { RecipeCard } from '@/components/recipe/RecipeCard';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, SkeletonGrid } from '@/components/ui/states';
@@ -31,7 +31,6 @@ export default function Feed() {
   // refetch and the Search button would be decorative.
   const [draft, setDraft] = useState<RecipeFilters>(EMPTY_FILTERS);
   const [applied, setApplied] = useState<RecipeFilters>(EMPTY_FILTERS);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { user } = useAuth();
   const { data: dietPrefs } = useDietPreferences();
@@ -86,26 +85,12 @@ export default function Feed() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[17rem_1fr]">
-      <aside
-        className={
-          sidebarOpen
-            ? 'fixed inset-0 z-40 overflow-y-auto bg-masa p-4 lg:static lg:z-auto lg:overflow-visible lg:p-0'
-            : 'hidden lg:block'
-        }
-      >
-        <div className="mb-4 flex justify-end lg:hidden">
-          <Button size="sm" variant="ghost" onClick={() => setSidebarOpen(false)}>
-            Cerrar
-          </Button>
-        </div>
+    <TwoPaneLayout
+      filters={
         <FilterSidebar
           draft={draft}
           onDraftChange={setDraft}
-          onApply={() => {
-            setApplied(draft);
-            setSidebarOpen(false);
-          }}
+          onApply={() => setApplied(draft)}
           onReset={() => {
             setDraft(EMPTY_FILTERS);
             setApplied(EMPTY_FILTERS);
@@ -115,22 +100,20 @@ export default function Feed() {
           seededDiets={dietPrefs ?? []}
           seededAllergens={allergenPrefs ?? []}
         />
-      </aside>
-
+      }
+    >
       <section className="flex flex-col gap-5">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl font-black tracking-tight text-comal">
-              Recetas
-            </h1>
-            <p className="mt-1 text-sm text-ceniza">
+            <h1 className="text-3xl font-semibold tracking-tight text-ink">Recetas</h1>
+            <p className="mt-1 text-sm text-body">
               {query.isLoading
                 ? 'Buscando…'
                 : `${recipes.length}${query.hasNextPage ? '+' : ''} ${
                     recipes.length === 1 ? 'receta' : 'recetas'
                   }`}
               {activeCount > 0 && (
-                <span className="text-ceniza">
+                <span className="text-muted">
                   {' '}
                   · {activeCount} {activeCount === 1 ? 'filtro' : 'filtros'} activos
                 </span>
@@ -139,16 +122,6 @@ export default function Feed() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <SlidersHorizontal size={14} aria-hidden />
-              Filtros
-            </Button>
-
             <label className="sr-only" htmlFor="sort">
               Ordenar
             </label>
@@ -156,7 +129,7 @@ export default function Feed() {
               id="sort"
               value={applied.sort}
               onChange={(e) => applySort(e.target.value as SortKey)}
-              className="border border-ceniza/35 bg-cal px-2 py-1.5 text-sm text-comal focus:border-comal focus:outline-none"
+              className="rounded-card border border-line-strong bg-surface px-2 py-1.5 text-sm text-body focus:border-line-strong focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             >
               {SORTS.map((s) => (
                 <option key={s.key} value={s.key}>
@@ -199,10 +172,11 @@ export default function Feed() {
         ) : (
           <>
             {/* Filter results cross-fade. Keyed on the applied set so a new
-                search fades rather than snapping. */}
+                search fades rather than snapping. The rail is 500px wide, so
+                the results column is a single stack, not a grid. */}
             <div
               key={JSON.stringify(applied)}
-              className="grid animate-fade-in grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+              className="flex animate-fade-in flex-col gap-5"
             >
               {recipes.map((r) => (
                 <RecipeCard
@@ -226,11 +200,11 @@ export default function Feed() {
 
             {query.isFetchingNextPage && <SkeletonGrid count={3} />}
             {!query.hasNextPage && recipes.length > 0 && (
-              <p className="py-4 text-center text-xs text-ceniza">Es todo por ahora.</p>
+              <p className="py-4 text-center text-xs text-muted">Es todo por ahora.</p>
             )}
           </>
         )}
       </section>
-    </div>
+    </TwoPaneLayout>
   );
 }

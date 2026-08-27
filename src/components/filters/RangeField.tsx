@@ -1,5 +1,6 @@
 import { useId } from 'react';
-import { Checkbox } from '@/components/ui/Field';
+import { Checkbox, FIELD_CONTROL, FIELD_LABEL } from '@/components/ui/Field';
+import { cx } from '@/utils/cx';
 
 type Props = {
   label: string;
@@ -24,10 +25,12 @@ export function RangeField({ label, value, onChange, min, max, step = 1, format 
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <label htmlFor={id} className="text-xs font-medium uppercase tracking-wide text-ceniza">
+        <label htmlFor={id} className={cx(FIELD_LABEL, 'mb-0')}>
           {label}
         </label>
-        <span className="font-mono text-xs text-comal">{active ? format(value) : 'sin límite'}</span>
+        <span className="font-mono text-xs text-muted">
+          {active ? format(value) : 'sin límite'}
+        </span>
       </div>
 
       <input
@@ -39,46 +42,13 @@ export function RangeField({ label, value, onChange, min, max, step = 1, format 
         value={value ?? max}
         disabled={!active}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-guajillo disabled:opacity-40"
+        className="w-full accent-brand disabled:opacity-40"
       />
 
       <Checkbox
-        label={<span className="text-xs text-ceniza">Aplicar este límite</span>}
+        label={<span className="text-xs text-muted">Aplicar este límite</span>}
         checked={active}
         onChange={(on) => onChange(on ? max : null)}
-      />
-    </div>
-  );
-}
-
-type CostProps = {
-  value: number | null;
-  onChange: (next: number | null) => void;
-  perServing: boolean;
-  onPerServingChange: (next: boolean) => void;
-};
-
-/**
- * Cost is the one filter with a second dimension. p_cost_per_serving only
- * travels with p_max_cost — on its own it means nothing to the RPC.
- */
-export function CostField({ value, onChange, perServing, onPerServingChange }: CostProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      <RangeField
-        label="Costo máximo"
-        value={value}
-        onChange={onChange}
-        min={20}
-        max={1000}
-        step={10}
-        format={(n) => `$${n}`}
-      />
-      <Checkbox
-        label={<span className="text-xs text-ceniza">Por porción, no por receta</span>}
-        checked={perServing}
-        disabled={value == null}
-        onChange={onPerServingChange}
       />
     </div>
   );
@@ -92,8 +62,8 @@ type ServingsProps = {
 
 export function ServingsRange({ min, max, onChange }: ServingsProps) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-ceniza">Porciones</span>
+    <div className="flex flex-col">
+      <span className={FIELD_LABEL}>Porciones</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -105,9 +75,9 @@ export function ServingsRange({ min, max, onChange }: ServingsProps) {
           onChange={(e) =>
             onChange({ min: e.target.value === '' ? null : Number(e.target.value), max })
           }
-          className="w-full border border-ceniza/35 bg-cal px-2 py-1.5 font-mono text-sm text-comal placeholder:font-body placeholder:text-ceniza/70 focus:border-comal focus:outline-none"
+          className={cx(FIELD_CONTROL, 'font-mono placeholder:font-body')}
         />
-        <span className="text-ceniza">–</span>
+        <span className="text-muted">–</span>
         <input
           type="number"
           min={1}
@@ -118,7 +88,7 @@ export function ServingsRange({ min, max, onChange }: ServingsProps) {
           onChange={(e) =>
             onChange({ min, max: e.target.value === '' ? null : Number(e.target.value) })
           }
-          className="w-full border border-ceniza/35 bg-cal px-2 py-1.5 font-mono text-sm text-comal placeholder:font-body placeholder:text-ceniza/70 focus:border-comal focus:outline-none"
+          className={cx(FIELD_CONTROL, 'font-mono placeholder:font-body')}
         />
       </div>
     </div>

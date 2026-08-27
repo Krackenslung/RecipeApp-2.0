@@ -30,12 +30,10 @@ export function TagGroup({ label, items, value, onChange, tone = 'neutral', comb
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="flex w-full items-baseline justify-between gap-2 text-xs font-medium uppercase tracking-wide text-ceniza">
+      <legend className="mb-1.5 flex w-full items-baseline justify-between gap-2 text-sm font-semibold text-body">
         <span>{label}</span>
         {combinator && (
-          <span className="text-[10px] normal-case tracking-normal text-ceniza/80">
-            {COMBINATOR_COPY[combinator]}
-          </span>
+          <span className="text-xs font-normal text-muted">{COMBINATOR_COPY[combinator]}</span>
         )}
       </legend>
 
@@ -52,7 +50,7 @@ export function TagGroup({ label, items, value, onChange, tone = 'neutral', comb
         ))}
       </div>
 
-      {note && <p className="text-xs text-ceniza">{note}</p>}
+      {note && <p className="text-xs text-muted">{note}</p>}
     </fieldset>
   );
 }
