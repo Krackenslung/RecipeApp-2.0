@@ -5,3 +5,6 @@ dist
 .vercel
 *.local
 *.tsbuildinfo
+
+# Supabase CLI scratch
+supabase/.temp
