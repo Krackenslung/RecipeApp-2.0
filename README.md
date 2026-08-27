@@ -28,7 +28,7 @@ repository**.
 | Database migrations | **Written**, in `supabase/migrations/`. Never yet run against a real Postgres |
 | Catalog seed | **Written**, in `supabase/seed.sql` |
 | `src/types/database.ts` | **Hand-written** from the schema below, deliberately narrow. Becomes generated output the moment migrations exist |
-| `api/generate.ts` | **Not written.** `useGeneration.ts` already calls `POST /api/generate` |
+| `api/generate.ts` | **Written**, and typechecked by `tsconfig.node.json`. Never yet run |
 | Storage bucket + policies | **Written**, in the storage migration |
 
 So `/generate` is the one screen that cannot work yet: the client half exists and the server half
@@ -135,13 +135,12 @@ Recipe App 2.0/
 │   ├── pages/{app,auth}/
 │   └── utils/                  # filterArgs, format, cx
 │
-├── supabase/
-│   ├── config.toml             # exposed schemas live here; `ai` is absent on purpose
-│   ├── migrations/             # forward-only, timestamped, checked in
-│   └── seed.sql                # catalog seeds
-│
-└── (not yet present)
-    └── api/generate.ts         # THE ONLY server code. Holds GEMINI_API_KEY
+├── api/
+│   └── generate.ts             # THE ONLY server code. Holds GEMINI_API_KEY
+└── supabase/
+    ├── config.toml             # exposed schemas live here; `ai` is absent on purpose
+    ├── migrations/             # forward-only, timestamped, checked in
+    └── seed.sql                # catalog seeds
 ```
 
 Flat at the repo root — Vercel only auto-detects `api/` when it sits at the project root.
@@ -161,6 +160,11 @@ Postgres / Supabase. **36 tables across 5 schemas.**
 | `recipe` | The recipe and everything it owns | 10 | yes |
 | `ai` | Gemini traceability and cost control | 3 | **no** |
 | `social` | Interaction between users | 9 | yes |
+
+> **service_role does not bypass the exposed-schema list.** It bypasses RLS, which is a different
+> thing. `supabase.schema('ai').rpc(...)` 404s whatever key is used, so `api/generate.ts` reaches the
+> `ai` schema through three definer wrappers in `recipe` — `gen_begin`, `gen_succeed`, `gen_fail` —
+> each granted to `service_role` and revoked from `public`.
 
 Two hard rules. **`auth` and `storage` belong to Supabase** — GoTrue owns `auth` and you cannot
 create tables there, which is why the identity schema is named `app`. And **`ai` is never added to
@@ -479,6 +483,7 @@ create view recipe.vw_recipe_cards with (security_invoker = true) as ...
 | `persist_generation(payload jsonb)` | `ai` | definer | Transactional write of a generated recipe |
 | `get_generation_status(p_request_id uuid)` | **`recipe`** | definer | The client's only window into `ai`. Lives in an exposed schema because PostgREST can only call what it can see; returns rows owned by `auth.uid()` and nothing else |
 | `increment_view_count(p_recipe_id uuid)` | `recipe` | definer | `view_count` is bumped by readers, who cannot update a recipe they don't own |
+| `gen_begin` / `gen_succeed` / `gen_fail` | `recipe` | definer | The server-side entry points for `api/generate.ts`. Granted to `service_role` only — see below |
 
 ---
 
@@ -793,8 +798,8 @@ The UI is in **English** — all copy, `lang="en"`, `en-US` locales in `format.t
    with generated output, then `npm run typecheck` to see where the two disagreed.
 3. **Verify RLS by signing in as two users and confirming each sees only their own rows.** Before
    there is data worth leaking.
-4. `api/generate.ts`, against the `ai.persist_generation(payload jsonb, p_author_id uuid)` contract
-   documented in that migration.
+4. Set `GEMINI_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project, then exercise
+   `/generate` end to end. `api/generate.ts` is written but has never run.
 
 # Open decisions
 

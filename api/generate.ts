@@ -1,0 +1,451 @@
+/**
+ * THE ONLY server code in the project.
+ *
+ * It exists for one reason: GEMINI_API_KEY cannot ship to a browser. Everything
+ * else in this app talks to Postgres directly through PostgREST, with RLS doing
+ * the authorization. This file is the exception, and it is the one place
+ * service_role appears — which is why the first thing it does is establish who
+ * the caller is, and why it never touches service_role before that has
+ * succeeded. Using it earlier would hand any anonymous request the whole
+ * database.
+ *
+ * The client half lives in src/queries/useGeneration.ts and expects:
+ *   200  { data: { request_id } }
+ *   429  { error, quota_remaining }
+ *   4xx/5xx { error }
+ * The { data } / { error } shape matches supabase-js so callers handle both
+ * paths identically.
+ */
+
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
+
+const MODEL = 'gemini-2.5-flash';
+const DAILY_LIMIT = 20;
+const GEMINI_TIMEOUT_MS = 60_000;
+const MAX_ATTEMPTS = 3;
+
+/**
+ * Structurally the client's RecipeFilters. Declared here rather than imported
+ * from src/: this function is bundled separately, and reaching into the client
+ * tree would drag the browser Supabase client and its env-var assertions into a
+ * server bundle that has neither.
+ */
+type Filters = {
+  includeIngredients?: number[];
+  excludeIngredients?: number[];
+  cuisines?: number[];
+  diets?: number[];
+  mealTypes?: number[];
+  excludeAllergens?: number[];
+  equipment?: number[];
+  maxMinutes?: number | null;
+  maxCost?: number | null;
+  costPerServing?: boolean;
+  maxCalories?: number | null;
+  maxDifficulty?: number | null;
+  minServings?: number | null;
+  maxServings?: number | null;
+  search?: string;
+};
+
+/** What Gemini is required to return. Enforced by responseSchema, not by hope. */
+const RESPONSE_SCHEMA = {
+  type: 'object',
+  required: ['recipe', 'ingredients', 'steps'],
+  properties: {
+    recipe: {
+      type: 'object',
+      required: ['title', 'servings'],
+      properties: {
+        title: { type: 'string' },
+        summary: { type: 'string' },
+        servings: { type: 'integer' },
+        prep_minutes: { type: 'integer' },
+        cook_minutes: { type: 'integer' },
+        difficulty: { type: 'integer' },
+        est_cost: { type: 'number' },
+        currency: { type: 'string' },
+        language: { type: 'string' },
+      },
+    },
+    ingredients: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['raw_text', 'name'],
+        properties: {
+          raw_text: { type: 'string' },
+          name: { type: 'string' },
+          quantity: { type: 'number' },
+          unit_code: { type: 'string' },
+          preparation: { type: 'string' },
+          is_optional: { type: 'boolean' },
+          group_label: { type: 'string' },
+          sort_order: { type: 'integer' },
+        },
+      },
+    },
+    steps: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['step_number', 'instruction'],
+        properties: {
+          step_number: { type: 'integer' },
+          instruction: { type: 'string' },
+          duration_minutes: { type: 'integer' },
+        },
+      },
+    },
+    nutrition: {
+      type: 'object',
+      properties: {
+        calories: { type: 'number' },
+        protein_g: { type: 'number' },
+        carbs_g: { type: 'number' },
+        fat_g: { type: 'number' },
+        fiber_g: { type: 'number' },
+        sugar_g: { type: 'number' },
+        sodium_mg: { type: 'number' },
+      },
+    },
+    cuisines: { type: 'array', items: { type: 'string' } },
+    diets: { type: 'array', items: { type: 'string' } },
+    meal_types: { type: 'array', items: { type: 'string' } },
+    equipment: { type: 'array', items: { type: 'string' } },
+  },
+} as const;
+
+const env = (name: string, fallback?: string) => process.env[name] ?? fallback;
+
+/**
+ * Slugs are generated here, not by the model: recipes.slug carries a unique
+ * index and a model asked twice for "pozole rojo" will happily answer with the
+ * same title both times.
+ */
+function slugify(title: string): string {
+  const base = title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${base || 'receta'}-${suffix}`;
+}
+
+function buildPrompt(prompt: string, filters: Filters): string {
+  const lines: string[] = [
+    'Eres un chef que devuelve recetas estructuradas en JSON.',
+    'Responde SOLO con el JSON del esquema. Sin markdown, sin explicaciones.',
+    '',
+    'Reglas:',
+    '- Los nombres de ingredientes en singular y en español ("jitomate", no "Jitomates").',
+    '- unit_code debe ser uno de: g, kg, ml, l, tbsp, tsp, cup, oz, lb, pza, pizca.',
+    '- cuisines, diets, meal_types y equipment son slugs del catálogo, en minúsculas.',
+    '- est_cost es el total estimado de la receta en MXN, no por porción.',
+    '- difficulty va de 1 (fácil) a 3 (difícil).',
+  ];
+
+  if (prompt.trim()) lines.push('', `Petición del usuario: ${prompt.trim()}`);
+
+  const c = describeFilters(filters);
+  if (c.length) lines.push('', 'Restricciones que la receta DEBE cumplir:', ...c);
+
+  return lines.join('\n');
+}
+
+/**
+ * The filters reach the model as prose. They are also stored verbatim as
+ * filters_json on the request row — that column is the audit trail, this is the
+ * lossy version the model reads.
+ */
+function describeFilters(f: Filters): string[] {
+  const out: string[] = [];
+  const push = (v: unknown, text: string) => {
+    if (Array.isArray(v) ? v.length : v !== null && v !== undefined) out.push(`- ${text}`);
+  };
+
+  push(f.maxMinutes, `Tiempo total máximo: ${f.maxMinutes} minutos.`);
+  push(f.maxCalories, `Máximo ${f.maxCalories} kcal por porción.`);
+  push(f.maxDifficulty, `Dificultad máxima: ${f.maxDifficulty} de 3.`);
+  push(f.minServings, `Al menos ${f.minServings} porciones.`);
+  push(f.maxServings, `No más de ${f.maxServings} porciones.`);
+  if (f.maxCost != null) {
+    out.push(
+      `- Costo máximo: ${f.maxCost} MXN ${f.costPerServing ? 'por porción' : 'en total'}.`,
+    );
+  }
+  if (f.search?.trim()) out.push(`- Debe parecerse a: ${f.search.trim()}`);
+
+  // The ids are catalog keys the model has never seen, so they are sent as a
+  // count rather than as numbers it would only hallucinate names for. The real
+  // enforcement is the filter on the way back out through search_recipes().
+  push(f.includeIngredients, `Debe incluir los ${f.includeIngredients?.length} ingredientes pedidos.`);
+  push(f.excludeIngredients, `Debe excluir por completo ${f.excludeIngredients?.length} ingrediente(s).`);
+  push(f.excludeAllergens, `Debe evitar ${f.excludeAllergens?.length} alérgeno(s).`);
+
+  return out;
+}
+
+type GeminiCall = {
+  parsed: unknown;
+  raw: unknown;
+  tokensIn: number | null;
+  tokensOut: number | null;
+};
+
+/**
+ * Retries on 503 and 429 only. A 400 means the request is malformed and will be
+ * malformed the second time too; retrying it just spends the user's latency
+ * budget to arrive at the same answer.
+ */
+async function callGemini(apiKey: string, prompt: string): Promise<GeminiCall> {
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+
+  let lastError = 'The model did not respond.';
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            // responseSchema plus this mime type is what makes the reply parse
+            // with JSON.parse and no repair step.
+            responseMimeType: 'application/json',
+            responseSchema: RESPONSE_SCHEMA,
+            temperature: 0.7,
+          },
+        }),
+      });
+
+      if (res.status === 503 || res.status === 429) {
+        lastError = `The model is busy (${res.status}).`;
+        if (attempt < MAX_ATTEMPTS) {
+          await new Promise((r) => setTimeout(r, attempt * 1_000));
+          continue;
+        }
+        throw new GenerationFailure('busy', lastError);
+      }
+
+      if (!res.ok) {
+        // Body may carry the key back in an error echo, so it is never returned
+        // to the caller and never logged verbatim.
+        throw new GenerationFailure('failed', `The model rejected the request (${res.status}).`);
+      }
+
+      const raw = (await res.json()) as Record<string, any>;
+      const text: string | undefined = raw?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const finish: string | undefined = raw?.candidates?.[0]?.finishReason;
+
+      if (finish === 'SAFETY' || finish === 'PROHIBITED_CONTENT' || raw?.promptFeedback?.blockReason) {
+        throw new GenerationFailure('filtered', 'The model declined this request.', raw);
+      }
+      if (!text) {
+        throw new GenerationFailure('failed', 'The model returned an empty response.', raw);
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new GenerationFailure('failed', 'The model returned malformed JSON.', raw);
+      }
+
+      return {
+        parsed,
+        raw,
+        tokensIn: raw?.usageMetadata?.promptTokenCount ?? null,
+        tokensOut: raw?.usageMetadata?.candidatesTokenCount ?? null,
+      };
+    } catch (e) {
+      if (e instanceof GenerationFailure) throw e;
+      // AbortError and network faults land here.
+      lastError = 'The model timed out.';
+      if (attempt >= MAX_ATTEMPTS) throw new GenerationFailure('failed', lastError);
+      await new Promise((r) => setTimeout(r, attempt * 1_000));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  throw new GenerationFailure('failed', lastError);
+}
+
+class GenerationFailure extends Error {
+  constructor(
+    readonly status: 'failed' | 'filtered' | 'busy',
+    message: string,
+    readonly raw?: unknown,
+  ) {
+    super(message);
+  }
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Explicit, so that a 405 from here is distinguishable from the one Vercel
+  // returns when a POST falls through the SPA rewrite onto index.html.
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed. Use POST.' });
+  }
+
+  const supabaseUrl = env('SUPABASE_URL', env('VITE_SUPABASE_URL'));
+  const anonKey = env('SUPABASE_ANON_KEY', env('VITE_SUPABASE_ANON_KEY'));
+  const serviceKey = env('SUPABASE_SERVICE_ROLE_KEY');
+  const geminiKey = env('GEMINI_API_KEY');
+
+  if (!supabaseUrl || !anonKey || !serviceKey || !geminiKey) {
+    // Which one is missing goes to the server log, never to the response: the
+    // names alone tell an attacker how this is wired.
+    console.error('[generate] missing env', {
+      supabaseUrl: Boolean(supabaseUrl),
+      anonKey: Boolean(anonKey),
+      serviceKey: Boolean(serviceKey),
+      geminiKey: Boolean(geminiKey),
+    });
+    return res.status(500).json({ error: 'The generator is not configured.' });
+  }
+
+  // --- 1. Who is calling ------------------------------------------------------
+  // This is a public URL protected by nothing else. Everything below depends on
+  // this block having succeeded.
+  const authHeader = req.headers.authorization ?? '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'Sign in to generate recipes.' });
+
+  const asCaller = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: userData, error: userError } = await asCaller.auth.getUser();
+  if (userError || !userData?.user) {
+    console.error('[generate] token', userError);
+    return res.status(401).json({ error: 'Your session expired. Sign in again.' });
+  }
+  const userId = userData.user.id;
+
+  const body = (typeof req.body === 'string' ? safeParse(req.body) : req.body) as {
+    prompt?: string;
+    filters?: Filters;
+  } | null;
+
+  const prompt = typeof body?.prompt === 'string' ? body.prompt : '';
+  const filters: Filters = body?.filters ?? {};
+
+  // Only now, with the caller established, does service_role come out.
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const db = admin.schema('recipe');
+
+  // --- 2 & 3. Quota and the request row, in one statement ---------------------
+  const { data: begun, error: beginError } = await db.rpc('gen_begin', {
+    p_user_id: userId,
+    p_prompt: prompt,
+    p_filters: filters,
+    p_model: MODEL,
+    p_daily_limit: DAILY_LIMIT,
+  });
+
+  if (beginError || !begun) {
+    console.error('[generate] gen_begin', beginError);
+    return res.status(500).json({ error: 'We couldn’t start the generation.' });
+  }
+
+  const begin = begun as { over_quota: boolean; remaining: number; request_id?: string };
+
+  if (begin.over_quota) {
+    // The client cannot read ai.usage_quota, so the remaining count only ever
+    // reaches it here.
+    return res.status(429).json({
+      error: 'You’ve hit your generation limit for today.',
+      quota_remaining: 0,
+    });
+  }
+
+  const requestId = begin.request_id!;
+
+  // The screen wants a request_id in under a second. Everything past this point
+  // is reported through ai.generation_requests, which the client polls via
+  // recipe.get_generation_status().
+  res.status(200).json({ data: { request_id: requestId }, quota_remaining: begin.remaining });
+
+  // --- 4 to 6. The slow half --------------------------------------------------
+  const startedAt = Date.now();
+  try {
+    const { parsed, raw, tokensIn, tokensOut } = await callGemini(geminiKey, buildPrompt(prompt, filters));
+
+    const payload = parsed as { recipe?: Record<string, unknown> };
+    if (!payload?.recipe?.title) {
+      throw new GenerationFailure('failed', 'The model returned a recipe with no title.', raw);
+    }
+
+    payload.recipe.slug = slugify(String(payload.recipe.title));
+    payload.recipe.language = payload.recipe.language ?? 'es';
+
+    const { error: persistError } = await db.rpc('gen_succeed', {
+      p_request_id: requestId,
+      p_author_id: userId,
+      p_payload: payload,
+      p_raw: raw,
+      p_tokens_in: tokensIn,
+      p_tokens_out: tokensOut,
+      p_latency_ms: Date.now() - startedAt,
+    });
+
+    if (persistError) {
+      console.error('[generate] gen_succeed', persistError);
+      await fail(db, requestId, 'failed', 'The recipe could not be saved.', raw, startedAt);
+    }
+  } catch (e) {
+    const failure = e instanceof GenerationFailure ? e : null;
+    console.error('[generate] request', requestId, failure?.message ?? e);
+    await fail(
+      db,
+      requestId,
+      failure?.status === 'filtered' ? 'filtered' : 'failed',
+      failure?.message ?? 'The generation failed.',
+      failure?.raw ?? null,
+      startedAt,
+    );
+  }
+}
+
+/** The response is already sent by the time this runs, so it can only log. */
+async function fail(
+  db: ReturnType<ReturnType<typeof createClient>['schema']>,
+  requestId: string,
+  status: 'failed' | 'filtered',
+  message: string,
+  raw: unknown,
+  startedAt: number,
+) {
+  const { error } = await db.rpc('gen_fail', {
+    p_request_id: requestId,
+    p_status: status,
+    p_error: message,
+    p_raw: raw ?? null,
+    p_latency_ms: Date.now() - startedAt,
+  });
+  if (error) console.error('[generate] gen_fail', error);
+}
+
+function safeParse(s: string): unknown {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
