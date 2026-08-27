@@ -35,6 +35,9 @@ export function Header() {
               onClick={() => setMenuOpen((v) => !v)}
               aria-expanded={menuOpen}
               aria-haspopup="menu"
+              // The name is hidden below sm, so the trigger needs a name of
+              // its own or it reads as an unlabelled button on a phone.
+              aria-label={`Menú de ${name}`}
               className="flex items-center gap-2 rounded-card px-2 py-1.5 text-sm text-body transition-colors hover:bg-hairline hover:text-ink"
             >
               {profile?.avatar_url ? (

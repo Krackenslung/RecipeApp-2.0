@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { useComments, useDeleteComment, usePostComment, type CommentNode } from '@/queries/useComments';
 import { useAuth } from '@/context/AuthProvider';
 import { Button } from '@/components/ui/Button';
+import { FIELD_CONTROL } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/states';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate } from '@/utils/format';
+import { cx } from '@/utils/cx';
 
 export function CommentThread({ recipeId }: { recipeId: string }) {
   const { data: comments, isLoading, isError } = useComments(recipeId);
@@ -44,7 +46,7 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="¿Cómo te quedó? ¿Cambiaste algo?"
-            className="min-h-20 w-full resize-y rounded-card border border-line-strong bg-surface px-3 py-2 text-sm text-body placeholder:text-muted focus:border-line-strong focus:outline-none"
+            className={cx(FIELD_CONTROL, 'min-h-20 resize-y')}
           />
           <div className="flex justify-end">
             <Button type="submit" size="sm" loading={post.isPending} disabled={!body.trim()}>
@@ -166,7 +168,7 @@ function Comment({
               id={`reply-${node.comment_id}`}
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              className="min-h-16 w-full resize-y rounded-card border border-line-strong bg-surface px-3 py-2 text-sm text-body focus:border-line-strong focus:outline-none"
+              className={cx(FIELD_CONTROL, 'min-h-16 resize-y')}
             />
             <div className="flex justify-end gap-2">
               <Button type="button" size="sm" variant="ghost" onClick={() => setReplying(false)}>
