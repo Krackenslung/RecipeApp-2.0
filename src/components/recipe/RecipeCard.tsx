@@ -12,8 +12,9 @@ type Props = {
 };
 
 /**
- * From RecipeCard.css. No shadow — v1 did not have one either; the card is
- * told apart by its border and the white against the canvas.
+ * From RecipeCard.css, with one deliberate departure: the card carries
+ * `shadow-card`. UI-MIGRATION.md §3 asks for no shadow; this is an explicit
+ * override, so the shadow is a token rather than a one-off class.
  */
 export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
   const cuisines = splitAgg(recipe.cuisines);
@@ -21,7 +22,7 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
   const isDraft = recipe.status !== 'published' || recipe.visibility !== 'public';
 
   return (
-    <article className="group relative flex cursor-pointer flex-col overflow-hidden rounded-card border border-line-strong bg-surface">
+    <article className="group relative flex cursor-pointer flex-col overflow-hidden rounded-card border border-line-strong bg-surface shadow-card">
       <Link to={`/r/${recipe.slug}`} className="flex flex-1 flex-col no-underline">
         <div className="h-[180px] w-full overflow-hidden bg-hairline">
           {recipe.cover_image_url ? (

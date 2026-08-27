@@ -43,7 +43,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-dvh w-full items-center justify-center p-4">
-      <div className="flex w-full max-w-[420px] flex-col gap-6 rounded-card border border-line-strong bg-surface px-8 py-10">
+      <div className="flex w-full max-w-[420px] flex-col gap-6 rounded-card border border-line-strong bg-surface px-8 py-10 shadow-card">
         <h1 className="text-3xl font-semibold tracking-tight text-ink">Entrar</h1>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">

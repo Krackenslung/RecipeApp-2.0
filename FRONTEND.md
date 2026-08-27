@@ -54,7 +54,7 @@ Two things survive from the original direction because `UI-MIGRATION.md` explici
 
 **Signature: the ingredient ledger.** Recipe detail lays ingredients as a two-column ledger — quantity in mono, right-aligned, leading to the ingredient name. Scaling servings animates only the numbers, which stay aligned because they're tabular. The hairline rule is now v1's red bullet, but the two-column shape is unchanged.
 
-**Cards have no shadows.** Still true, and still the rule — but for a different reason than before. v1 didn't have shadows either; a card is told apart by its `line-strong` border and the white against the canvas. This was never the thing that made v1 look like v1.
+**Cards do have shadows** — and this is the one place the codebase deliberately departs from `UI-MIGRATION.md`, which asks for none (§3) and greps for `shadow-*` in its checklist (§6). Overridden on purpose. There is a single elevation, `--shadow-card`, in `@theme`; it goes on `RecipeCard`, `SkeletonCard` (which has to match or the list pops when data lands), the collection tiles, and the auth card. Nothing else is elevated: panels, dialogs and list rows stay flat and are told apart by their `line-strong` border.
 
 **Motion is restrained.** Filter results cross-fade, servings numbers tick, nothing else. Respect `prefers-reduced-motion` — the servings ticker becomes an instant swap.
 

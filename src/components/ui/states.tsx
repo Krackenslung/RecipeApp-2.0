@@ -22,7 +22,8 @@ export function Spinner({ className }: { className?: string }) {
 export function SkeletonCard() {
   return (
     <article
-      className="overflow-hidden rounded-card border border-line-strong bg-surface"
+      // Matches RecipeCard down to the shadow, or the list pops when data lands.
+      className="overflow-hidden rounded-card border border-line-strong bg-surface shadow-card"
       aria-hidden
     >
       <div className="h-[180px] w-full animate-pulse bg-hairline" />

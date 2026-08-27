@@ -74,7 +74,7 @@ export default function Collections() {
             <li key={c.collection_id}>
               <Link
                 to={`/c/${c.collection_id}`}
-                className="flex h-full flex-col gap-2 rounded-card border border-line-strong bg-surface p-4 transition-colors hover:border-brand"
+                className="flex h-full flex-col gap-2 rounded-card border border-line-strong bg-surface p-4 no-underline shadow-card transition-colors hover:border-brand"
               >
                 <div className="flex items-start gap-2">
                   <h2 className="flex-1 text-lg font-semibold text-ink">
