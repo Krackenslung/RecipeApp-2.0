@@ -281,7 +281,7 @@ export default function RecipeDetail() {
                           toast(`Agregada a ${c.name}`, 'success');
                           collectionDialog.close();
                         },
-                        onError: () => toast('No pudimos agregarla.', 'error'),
+                        onError: () => toast('We couldn’t add it.', 'error'),
                       },
                     )
                   }
@@ -297,7 +297,7 @@ export default function RecipeDetail() {
           <p className="text-sm text-body">
             You don’t have any collections yet.{' '}
             <Link to="/me/collections" className="text-brand underline">
-              Crea una
+              Create one
             </Link>
             .
           </p>

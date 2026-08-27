@@ -136,68 +136,68 @@ export function narrowestConstraint(f: RecipeFilters): NarrowestConstraint | nul
   if (f.includeIngredients.length > 1) {
     return {
       key: 'includeIngredients',
-      label: 'ingredientes',
-      message: `Ninguna receta lleva los ${f.includeIngredients.length} ingredientes. ¿Quitas uno?`,
+      label: 'ingredients',
+      message: `No recipe has all ${f.includeIngredients.length} ingredients. Drop one?`,
     };
   }
   if (f.diets.length > 1) {
     return {
       key: 'diets',
-      label: 'dietas',
-      message: `Ninguna receta cumple las ${f.diets.length} dietas a la vez. ¿Quitas una?`,
+      label: 'diets',
+      message: `No recipe satisfies all ${f.diets.length} diets at once. Drop one?`,
     };
   }
   if (f.equipment.length > 1) {
     return {
       key: 'equipment',
-      label: 'equipo',
-      message: `Ninguna receta usa los ${f.equipment.length} utensilios. ¿Quitas uno?`,
+      label: 'equipment',
+      message: `No recipe uses all ${f.equipment.length} pieces of equipment. Drop one?`,
     };
   }
   if (f.maxMinutes != null) {
     return {
       key: 'maxMinutes',
-      label: 'tiempo',
-      message: `Ninguna receta se hace en ${f.maxMinutes} min o menos. ¿Subes el límite?`,
+      label: 'time',
+      message: `No recipe is done in ${f.maxMinutes} min or less. Raise the limit?`,
     };
   }
   if (f.maxCost != null) {
     return {
       key: 'maxCost',
-      label: 'costo',
-      message: `Ninguna receta cuesta ${f.maxCost} o menos. ¿Subes el límite?`,
+      label: 'cost',
+      message: `No recipe costs ${f.maxCost} or less. Raise the limit?`,
     };
   }
   if (f.maxCalories != null) {
     return {
       key: 'maxCalories',
-      label: 'calorías',
-      message: `Ninguna receta baja de ${f.maxCalories} kcal. ¿Subes el límite?`,
+      label: 'calories',
+      message: `No recipe comes under ${f.maxCalories} kcal. Raise the limit?`,
     };
   }
   if (f.minRating != null) {
     return {
       key: 'minRating',
-      label: 'calificación',
-      message: `Ninguna receta llega a ${f.minRating} estrellas. ¿Bajas el mínimo?`,
+      label: 'rating',
+      message: `No recipe reaches ${f.minRating} stars. Lower the minimum?`,
     };
   }
   if (f.search.trim()) {
     return {
       key: 'search',
-      label: 'búsqueda',
-      message: `Nada coincide con «${f.search.trim()}». ¿Borras la búsqueda?`,
+      label: 'search',
+      message: `Nothing matches “${f.search.trim()}”. Clear the search?`,
     };
   }
   if (f.includeIngredients.length === 1) {
     return {
       key: 'includeIngredients',
-      label: 'ingredientes',
-      message: 'Ninguna receta lleva ese ingrediente. ¿Lo quitas?',
+      label: 'ingredients',
+      message: 'No recipe has that ingredient. Drop it?',
     };
   }
   if (f.cuisines.length) {
-    return { key: 'cuisines', label: 'cocina', message: 'Nada en esa cocina todavía. ¿La quitas?' };
+    return { key: 'cuisines', label: 'cuisine', message: 'Nothing in that cuisine yet. Drop it?' };
   }
   return null;
 }

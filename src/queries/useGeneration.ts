@@ -41,7 +41,7 @@ export function useStartGeneration() {
     mutationFn: async ({ prompt, filters }) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      if (!token) throw new GenerationError('Inicia sesión para generar recetas.');
+      if (!token) throw new GenerationError('Sign in to generate recipes.');
 
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -62,13 +62,13 @@ export function useStartGeneration() {
         // Quota lives in ai.usage_quota and the client cannot read it — the
         // remaining count only arrives in this response body.
         throw new GenerationError(
-          body.error ?? 'Llegaste a tu límite de generaciones por hoy.',
+          body.error ?? 'You’ve hit your generation limit for today.',
           body.quota_remaining ?? 0,
           true,
         );
       }
       if (!res.ok || body.error || !body.data) {
-        throw new GenerationError(body.error ?? 'No pudimos generar la receta. Inténtalo de nuevo.');
+        throw new GenerationError(body.error ?? 'We couldn’t generate the recipe. Try again.');
       }
       return body.data;
     },
@@ -106,7 +106,7 @@ export function useGenerationStatus(requestId: string | null) {
       if (first) setRow(first as GenerationRow);
     } catch (e) {
       console.error('[generation] status', e);
-      setError('No pudimos leer el estado de la generación.');
+      setError('We couldn’t read the generation status.');
     }
   }, []);
 

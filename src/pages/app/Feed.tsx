@@ -164,7 +164,7 @@ export default function Feed() {
                     setApplied(next);
                   }}
                 >
-                  Quitar {narrowest.label}
+                  Remove {narrowest.label}
                 </Button>
               )
             }

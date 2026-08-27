@@ -21,12 +21,12 @@ export function useUploadRecipeImage() {
 
   return useMutation({
     mutationFn: async ({ recipeId, file }: { recipeId: string; file: File }) => {
-      if (!user) throw new UploadError('Inicia sesión para subir fotos.');
+      if (!user) throw new UploadError('Sign in to upload photos.');
       if (!ALLOWED.includes(file.type)) {
-        throw new UploadError('Solo aceptamos JPG, PNG, WebP o AVIF.');
+        throw new UploadError('We only accept JPG, PNG, WebP or AVIF.');
       }
       if (file.size > MAX_BYTES) {
-        throw new UploadError('La foto pesa más de 5 MB.');
+        throw new UploadError('That photo is over 5 MB.');
       }
 
       const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
@@ -39,7 +39,7 @@ export function useUploadRecipeImage() {
       });
       if (error) {
         console.error('[storage] upload', error);
-        throw new UploadError('No pudimos subir la foto. Inténtalo de nuevo.');
+        throw new UploadError('We couldn’t upload the photo. Try again.');
       }
 
       // Public bucket: a permanent CDN URL that drops straight into <img src>.

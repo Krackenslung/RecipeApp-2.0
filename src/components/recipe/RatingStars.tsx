@@ -62,7 +62,7 @@ export function RatingStars({ value, onRate, onClear, readOnly = false, size = 2
           onClick={onClear}
           className="text-xs text-body transition-colors hover:text-ink"
         >
-          Quitar
+          Clear
         </button>
       )}
     </div>

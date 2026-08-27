@@ -59,7 +59,7 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
           <Link to="/login" className="text-brand underline">
             Sign in
           </Link>{' '}
-          para comentar.
+          to comment.
         </p>
       )}
 

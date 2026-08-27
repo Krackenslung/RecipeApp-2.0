@@ -262,7 +262,7 @@ export default function RecipeEditor() {
                 variant="ghost"
                 onClick={() => setForm({ ...form, coverImageUrl: '' })}
               >
-                Quitar
+                Remove
               </Button>
             )}
             <span className="text-xs text-body">JPG, PNG, WebP or AVIF. Up to 5 MB.</span>

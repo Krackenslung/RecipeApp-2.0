@@ -71,7 +71,7 @@ export function RemovableChip({
       <button
         type="button"
         onClick={onRemove}
-        aria-label={`Quitar ${label}`}
+        aria-label={`Remove ${label}`}
         className="cursor-pointer opacity-70 transition-opacity hover:opacity-100"
       >
         <X size={12} aria-hidden />
