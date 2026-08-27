@@ -1,22 +1,41 @@
 @import "tailwindcss";
 
 @theme {
-  --color-masa:      #F0E6D2;
-  --color-comal:     #1C1917;
-  --color-guajillo:  #A63A24;
-  --color-tomatillo: #6B7F3A;
-  --color-cal:       #FAF7F0;
-  --color-ceniza:    #78716C;
+  /* Texto */
+  --color-ink:          #1a1a1a;   /* títulos, nombres de receta */
+  --color-body:         #555555;   /* párrafo, labels, nav inactivo */
+  --color-muted:        #888888;   /* metadatos, footer de tarjeta */
 
-  --font-display: "Fraunces", Georgia, serif;
-  --font-body:    "Inter", system-ui, sans-serif;
-  --font-mono:    "JetBrains Mono", monospace;
+  /* Superficies */
+  --color-surface:      #ffffff;   /* header, sidebar, tarjetas, rail de filtros */
+  --color-canvas:       #f8f9fa;   /* fondo del área de contenido */
+
+  /* Bordes — tres pesos, no uno */
+  --color-line:         #e9ecef;   /* chrome: header, sidebar, rails */
+  --color-line-strong:  #dddddd;   /* borde de tarjeta */
+  --color-hairline:     #f0f0f0;   /* separadores internos, fondo de chip */
+
+  /* Acento */
+  --color-brand:        #e74c3c;
+  --color-brand-dark:   #c0392b;   /* hover del botón primario */
+  --color-brand-soft:   #fdecea;   /* fondo del nav activo */
+  --color-success:      #198754;   /* nivel de costo seleccionado */
+
+  /* Radios */
+  --radius-card:        8px;
+  --radius-chip:        4px;
+
+  /* Tipografía */
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 @layer base {
   html {
-    background-color: var(--color-masa);
-    color: var(--color-comal);
+    /* La 1.0 es sólo claro. No hay variantes dark:. */
+    color-scheme: light;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
     font-family: var(--font-body);
     -webkit-text-size-adjust: 100%;
   }
@@ -33,13 +52,13 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-guajillo);
+    outline: 2px solid var(--color-brand);
     outline-offset: 2px;
   }
 
   /* Native <dialog> — Tailwind styles the element, this handles the backdrop. */
   dialog::backdrop {
-    background-color: color-mix(in srgb, var(--color-comal) 55%, transparent);
+    background-color: color-mix(in srgb, var(--color-ink) 55%, transparent);
   }
 
   dialog {
