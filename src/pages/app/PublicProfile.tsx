@@ -44,7 +44,7 @@ export default function PublicProfile() {
   if (isError) {
     const notFound = error instanceof Error && error.message === 'NOT_FOUND';
     return notFound ? (
-      <EmptyState title="No encontramos a esa persona" />
+      <EmptyState title="We couldn’t find that person" />
     ) : (
       <ErrorState onRetry={() => void refetch()} />
     );
@@ -75,11 +75,11 @@ export default function PublicProfile() {
 
           <dl className="flex gap-5 font-mono text-xs text-body">
             <div className="flex gap-1">
-              <dt>Seguidores</dt>
+              <dt>Followers</dt>
               <dd className="text-ink">{counts?.followers ?? '—'}</dd>
             </div>
             <div className="flex gap-1">
-              <dt>Sigue a</dt>
+              <dt>Following</dt>
               <dd className="text-ink">{counts?.following ?? '—'}</dd>
             </div>
           </dl>
@@ -92,14 +92,14 @@ export default function PublicProfile() {
             loading={toggleFollow.isPending}
             onClick={() => toggleFollow.mutate(Boolean(following))}
           >
-            {following ? 'Siguiendo' : 'Seguir'}
+            {following ? 'Following' : 'Follow'}
           </Button>
         )}
       </header>
 
       {collections && collections.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">Colecciones</h2>
+          <h2 className="text-xl font-semibold text-ink">Collections</h2>
           <ul className="flex flex-wrap gap-2">
             {collections.map((c) => (
               <li key={c.collection_id}>
@@ -116,12 +116,12 @@ export default function PublicProfile() {
       )}
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-ink">Recetas</h2>
+        <h2 className="text-xl font-semibold text-ink">Recipes</h2>
 
         {query.isLoading ? (
           <SkeletonGrid />
         ) : recipes.length === 0 ? (
-          <EmptyState title="Todavía no ha publicado nada" />
+          <EmptyState title="Nothing published yet" />
         ) : (
           <>
             <div className="grid animate-fade-in grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

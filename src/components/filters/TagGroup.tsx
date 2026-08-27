@@ -18,9 +18,9 @@ type Props = {
 };
 
 const COMBINATOR_COPY: Record<'ANY' | 'ALL' | 'NONE', string> = {
-  ANY: 'cualquiera de las marcadas',
-  ALL: 'debe cumplir todas',
-  NONE: 'se excluyen todas',
+  ANY: 'any of the checked',
+  ALL: 'must satisfy all',
+  NONE: 'all excluded',
 };
 
 export function TagGroup({ label, items, value, onChange, tone = 'neutral', combinator, note }: Props) {

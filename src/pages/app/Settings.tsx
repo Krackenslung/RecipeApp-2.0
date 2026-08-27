@@ -51,10 +51,10 @@ export default function Settings() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-10">
-      <h1 className="text-3xl font-semibold text-ink">Ajustes</h1>
+      <h1 className="text-3xl font-semibold text-ink">Settings</h1>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-ink">Perfil</h2>
+        <h2 className="text-xl font-semibold text-ink">Profile</h2>
 
         <form
           className="flex flex-col gap-4"
@@ -67,35 +67,35 @@ export default function Settings() {
                 avatar_url: avatarUrl.trim() || null,
               },
               {
-                onSuccess: () => toast('Perfil guardado', 'success'),
-                onError: () => toast('No pudimos guardar tu perfil.', 'error'),
+                onSuccess: () => toast('Profile saved', 'success'),
+                onError: () => toast('We couldn’t save your profile.', 'error'),
               },
             );
           }}
         >
           <TextField
-            label="Usuario"
+            label="Username"
             value={profile?.username ?? ''}
             readOnly
             disabled
-            hint="El usuario no se cambia desde aquí."
+            hint="Usernames aren’t changed from here."
           />
           <TextField
-            label="Nombre visible"
+            label="Display name"
             value={displayName}
             maxLength={60}
             onChange={(e) => setDisplayName(e.target.value)}
           />
           <TextArea label="Bio" value={bio} onChange={(e) => setBio(e.target.value)} />
           <TextField
-            label="Foto (URL)"
+            label="Photo (URL)"
             type="url"
             value={avatarUrl}
             onChange={(e) => setAvatarUrl(e.target.value)}
           />
           <div className="flex justify-end">
             <Button type="submit" variant="primary" loading={updateProfile.isPending}>
-              Guardar perfil
+              Save profile
             </Button>
           </div>
         </form>
@@ -104,10 +104,10 @@ export default function Settings() {
       <section className="flex flex-col gap-4 border-t border-line-strong pt-8">
         <div>
           <h2 className="text-xl font-semibold text-ink">
-            Dietas y alérgenos
+            Diets and allergens
           </h2>
           <p className="mt-1 text-sm text-body">
-            Esto pre-llena los filtros cuando entras. Siempre puedes quitarlos en la búsqueda.
+            This pre-fills the filters when you sign in. You can always drop them from a search.
           </p>
         </div>
 
@@ -121,13 +121,13 @@ export default function Settings() {
         />
 
         <TagGroup
-          label="Alérgenos a evitar"
+          label="Allergens to avoid"
           tone="accent"
           combinator="NONE"
           items={allergens.map((a) => ({ id: a.allergen_id, name: a.name }))}
           value={selectedAllergens}
           onChange={setSelectedAllergens}
-          note="Los alérgenos se calculan desde los ingredientes, incluso los opcionales."
+          note="Allergens are derived from the ingredients, optional ones included."
         />
 
         <div className="flex justify-end">
@@ -138,14 +138,14 @@ export default function Settings() {
               saveDiets.mutate(selectedDiets, {
                 onSuccess: () =>
                   saveAllergens.mutate(selectedAllergens, {
-                    onSuccess: () => toast('Preferencias guardadas', 'success'),
-                    onError: () => toast('No pudimos guardar tus preferencias.', 'error'),
+                    onSuccess: () => toast('Preferences saved', 'success'),
+                    onError: () => toast('We couldn’t save your preferences.', 'error'),
                   }),
-                onError: () => toast('No pudimos guardar tus preferencias.', 'error'),
+                onError: () => toast('We couldn’t save your preferences.', 'error'),
               });
             }}
           >
-            Guardar preferencias
+            Save preferences
           </Button>
         </div>
       </section>

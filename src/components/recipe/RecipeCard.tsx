@@ -33,8 +33,8 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
               className="h-[180px] w-full object-cover"
             />
           ) : (
-            // PLACEHOLDER — no_recipe_image.png todavía no está en src/assets/.
-            // Mientras tanto, la inicial sobre el gris de la 1.0.
+            // PLACEHOLDER — no_recipe_image.png is not in src/assets/ yet.
+            // Until then, the initial over v1's grey.
             <div className="flex h-full w-full items-center justify-center">
               <span className="text-4xl font-bold text-muted">{recipe.title.slice(0, 1)}</span>
             </div>
@@ -48,7 +48,7 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
             </h3>
             {isDraft && (
               <span className="mt-0.5 shrink-0 rounded-chip bg-hairline px-2 py-0.5 text-xs text-muted">
-                borrador
+                draft
               </span>
             )}
           </div>
@@ -74,24 +74,24 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
         <dl className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-hairline px-4 py-2.5 font-mono text-xs text-muted">
           <div className="flex items-center gap-1">
             <Clock size={12} aria-hidden />
-            <dt className="sr-only">Tiempo</dt>
+            <dt className="sr-only">Time</dt>
             <dd>{formatMinutes(recipe.total_minutes)}</dd>
           </div>
           <div className="flex items-center gap-1">
             <Users size={12} aria-hidden />
-            <dt className="sr-only">Porciones</dt>
+            <dt className="sr-only">Servings</dt>
             <dd>{recipe.servings}</dd>
           </div>
           {recipe.est_cost != null && (
             <div className="flex items-center gap-1">
-              <dt className="sr-only">Costo</dt>
+              <dt className="sr-only">Cost</dt>
               <dd>{formatCost(recipe.est_cost, recipe.currency)}</dd>
             </div>
           )}
           {recipe.rating_count > 0 && (
             <div className="flex items-center gap-1">
               <Star size={12} aria-hidden className="text-brand" />
-              <dt className="sr-only">Calificación</dt>
+              <dt className="sr-only">Rating</dt>
               <dd>
                 {formatRating(recipe.rating_avg)}
                 <span> ({recipe.rating_count})</span>
@@ -106,7 +106,7 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
           type="button"
           onClick={onToggleSave}
           aria-pressed={saved}
-          aria-label={saved ? 'Quitar de guardadas' : 'Guardar receta'}
+          aria-label={saved ? 'Remove from saved' : 'Save recipe'}
           className={cx(
             'absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-card border bg-surface transition-colors',
             saved

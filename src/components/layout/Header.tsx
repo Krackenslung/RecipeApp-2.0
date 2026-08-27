@@ -15,15 +15,15 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const name = profile?.display_name ?? profile?.username ?? 'Mi perfil';
+  const name = profile?.display_name ?? profile?.username ?? 'My profile';
 
   return (
     <header className="col-span-full row-start-1 sticky top-0 z-50 flex items-center justify-between border-b border-line bg-surface px-6">
       <Link to="/" className="flex items-center gap-2 no-underline">
-        {/* PLACEHOLDER — recipes_powered_by_gemini_logo.png todavía no está en
-            src/assets/. Cuando el PNG se copie del repo 1.0, esto se sustituye
-            por <img src={logo} alt="Recetas" className="h-9" />. */}
-        <span className="text-lg font-bold tracking-tight text-ink">Recetas</span>
+        {/* PLACEHOLDER — recipes_powered_by_gemini_logo.png is not in src/assets/
+            yet. Once the PNG is copied over from the v1 repo, this becomes
+            <img src={logo} alt="Recipes" className="h-9" />. */}
+        <span className="text-lg font-bold tracking-tight text-ink">Recipes</span>
         <span className="text-xs text-muted">powered by Gemini</span>
       </Link>
 
@@ -37,7 +37,7 @@ export function Header() {
               aria-haspopup="menu"
               // The name is hidden below sm, so the trigger needs a name of
               // its own or it reads as an unlabelled button on a phone.
-              aria-label={`Menú de ${name}`}
+              aria-label={`${name} menu`}
               className="flex items-center gap-2 rounded-card px-2 py-1.5 text-sm text-body transition-colors hover:bg-hairline hover:text-ink"
             >
               {profile?.avatar_url ? (
@@ -66,7 +66,7 @@ export function Header() {
                   icon={<Settings size={16} />}
                   onClick={() => setMenuOpen(false)}
                 >
-                  Ajustes
+                  Settings
                 </MenuLink>
               </div>
             )}
@@ -82,7 +82,7 @@ export function Header() {
             }}
           >
             <LogOut size={16} aria-hidden />
-            Cerrar sesión
+            Sign out
           </Button>
         </div>
       ) : (
@@ -90,7 +90,7 @@ export function Header() {
           to="/login"
           className="text-sm text-body no-underline transition-colors hover:text-ink"
         >
-          Entrar
+          Sign in
         </Link>
       )}
     </header>

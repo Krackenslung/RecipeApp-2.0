@@ -4,9 +4,9 @@ import { ButtonLink } from '@/components/ui/Button';
 export default function NotFound() {
   return (
     <EmptyState
-      title="Aquí no hay nada"
-      message="La liga no lleva a ninguna receta."
-      action={<ButtonLink to="/">Volver a explorar</ButtonLink>}
+      title="Nothing here"
+      message="That link doesn’t lead to a recipe."
+      action={<ButtonLink to="/">Back to browsing</ButtonLink>}
     />
   );
 }

@@ -12,10 +12,10 @@ type Report = Database['social']['Tables']['reports']['Row'];
 type Status = Report['status'];
 
 const STATUS_LABEL: Record<Status, string> = {
-  open: 'Abierto',
-  reviewing: 'En revisión',
-  resolved: 'Resuelto',
-  dismissed: 'Descartado',
+  open: 'Open',
+  reviewing: 'Reviewing',
+  resolved: 'Resolved',
+  dismissed: 'Dismissed',
 };
 
 function useReports() {
@@ -66,9 +66,9 @@ export default function Moderation() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="text-3xl font-semibold text-ink">Moderación</h1>
+        <h1 className="text-3xl font-semibold text-ink">Moderation</h1>
         <p className="mt-1 text-sm text-body">
-          {reports ? `${reports.length} sin resolver` : '…'}
+          {reports ? `${reports.length} unresolved` : '…'}
         </p>
       </header>
 
@@ -77,7 +77,7 @@ export default function Moderation() {
       ) : isError ? (
         <ErrorState onRetry={() => void refetch()} />
       ) : !reports?.length ? (
-        <EmptyState title="Cola vacía" message="Nada reportado por ahora." />
+        <EmptyState title="Queue empty" message="Nothing reported for now." />
       ) : (
         <ul className="flex flex-col gap-3">
           {reports.map((r) => (
@@ -117,11 +117,11 @@ export default function Moderation() {
                   onClick={() =>
                     resolve.mutate(
                       { reportId: r.report_id, status: 'dismissed' },
-                      { onSuccess: () => toast('Descartado', 'success') },
+                      { onSuccess: () => toast('Dismissed', 'success') },
                     )
                   }
                 >
-                  Descartar
+                  Dismiss
                 </Button>
                 <Button
                   size="sm"
@@ -129,11 +129,11 @@ export default function Moderation() {
                   onClick={() =>
                     resolve.mutate(
                       { reportId: r.report_id, status: 'resolved' },
-                      { onSuccess: () => toast('Resuelto', 'success') },
+                      { onSuccess: () => toast('Resolved', 'success') },
                     )
                   }
                 >
-                  Resolver
+                  Resolve
                 </Button>
               </div>
             </li>

@@ -47,7 +47,7 @@ export function IngredientLedger({ ingredients, baseServings, servings }: Props)
   }, [ingredients]);
 
   if (!ingredients.length) {
-    return <p className="text-sm text-body">Esta receta todavía no tiene ingredientes.</p>;
+    return <p className="text-sm text-body">This recipe has no ingredients yet.</p>;
   }
 
   return (
@@ -81,7 +81,7 @@ export function IngredientLedger({ ingredients, baseServings, servings }: Props)
                         ing.raw_text}
                       {ing.preparation && <span className="text-muted">, {ing.preparation}</span>}
                       {ing.is_optional && (
-                        <span className="ml-1.5 text-xs text-muted">(opcional)</span>
+                        <span className="ml-1.5 text-xs text-muted">(optional)</span>
                       )}
                     </span>
                   </span>

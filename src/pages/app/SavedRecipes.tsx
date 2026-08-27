@@ -11,9 +11,9 @@ export default function SavedRecipes() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="text-3xl font-semibold text-ink">Guardadas</h1>
+        <h1 className="text-3xl font-semibold text-ink">Saved</h1>
         <p className="mt-1 text-sm text-body">
-          {recipes ? `${recipes.length} ${recipes.length === 1 ? 'receta' : 'recetas'}` : '…'}
+          {recipes ? `${recipes.length} ${recipes.length === 1 ? 'recipe' : 'recipes'}` : '…'}
         </p>
       </header>
 
@@ -23,9 +23,9 @@ export default function SavedRecipes() {
         <ErrorState onRetry={() => void refetch()} />
       ) : !recipes?.length ? (
         <EmptyState
-          title="Nada guardado todavía"
-          message="El marcador en cada receta la manda aquí."
-          action={<ButtonLink to="/">Explorar recetas</ButtonLink>}
+          title="Nothing saved yet"
+          message="The bookmark on any recipe sends it here."
+          action={<ButtonLink to="/">Browse recipes</ButtonLink>}
         />
       ) : (
         <div className="grid animate-fade-in grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

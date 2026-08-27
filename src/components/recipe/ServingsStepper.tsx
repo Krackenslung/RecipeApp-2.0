@@ -14,14 +14,14 @@ export function ServingsStepper({ value, base, onChange, min = 1, max = 100 }: P
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm font-semibold text-body">Porciones</span>
+      <span className="text-sm font-semibold text-body">Servings</span>
 
       <div className="flex items-center overflow-hidden rounded-card border border-line-strong">
         <button
           type="button"
           onClick={() => onChange(clamp(value - 1))}
           disabled={value <= min}
-          aria-label="Una porción menos"
+          aria-label="One serving fewer"
           className="flex h-9 w-9 items-center justify-center text-body transition-colors hover:text-ink disabled:opacity-35"
         >
           <Minus size={15} aria-hidden />
@@ -38,7 +38,7 @@ export function ServingsStepper({ value, base, onChange, min = 1, max = 100 }: P
           type="button"
           onClick={() => onChange(clamp(value + 1))}
           disabled={value >= max}
-          aria-label="Una porción más"
+          aria-label="One serving more"
           className="flex h-9 w-9 items-center justify-center text-body transition-colors hover:text-ink disabled:opacity-35"
         >
           <Plus size={15} aria-hidden />
@@ -52,7 +52,7 @@ export function ServingsStepper({ value, base, onChange, min = 1, max = 100 }: P
           className="inline-flex items-center gap-1 text-xs text-body transition-colors hover:text-ink"
         >
           <RotateCcw size={12} aria-hidden />
-          Volver a {base}
+          Back to {base}
         </button>
       )}
     </div>

@@ -26,13 +26,13 @@ export default function Collections() {
       { name: name.trim(), description: description.trim() || undefined, is_public: isPublic },
       {
         onSuccess: () => {
-          toast('Colección creada', 'success');
+          toast('Collection created', 'success');
           setName('');
           setDescription('');
           setIsPublic(false);
           dialog.close();
         },
-        onError: () => toast('Ya tienes una colección con ese nombre.', 'error'),
+        onError: () => toast('You already have a collection with that name.', 'error'),
       },
     );
   }
@@ -42,7 +42,7 @@ export default function Collections() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold text-ink">
-            Colecciones
+            Collections
           </h1>
           <p className="mt-1 text-sm text-body">
             {collections ? `${collections.length}` : '…'} en total
@@ -50,7 +50,7 @@ export default function Collections() {
         </div>
         <Button variant="primary" size="sm" onClick={dialog.show}>
           <Plus size={14} aria-hidden />
-          Nueva colección
+          New collection
         </Button>
       </header>
 
@@ -60,11 +60,11 @@ export default function Collections() {
         <ErrorState onRetry={() => void refetch()} />
       ) : !collections?.length ? (
         <EmptyState
-          title="Sin colecciones"
-          message="Agrupa recetas por lo que quieras: la semana, los tacos, lo que le gusta a tu mamá."
+          title="No collections"
+          message="Group recipes however you like: the week ahead, taco night, the ones your mum loves."
           action={
             <Button variant="primary" onClick={dialog.show}>
-              Crear la primera
+              Create the first one
             </Button>
           }
         />
@@ -80,7 +80,7 @@ export default function Collections() {
                   <h2 className="flex-1 text-lg font-semibold text-ink">
                     {c.name}
                   </h2>
-                  {!c.is_public && <Lock size={13} className="mt-1 text-body" aria-label="Privada" />}
+                  {!c.is_public && <Lock size={13} className="mt-1 text-body" aria-label="Private" />}
                 </div>
                 {c.description && <p className="line-clamp-2 text-sm text-body">{c.description}</p>}
                 <span className="mt-auto font-mono text-xs text-body">
@@ -94,12 +94,12 @@ export default function Collections() {
 
       <Dialog
         dialogRef={dialog.ref}
-        title="Nueva colección"
+        title="New collection"
         onClose={dialog.close}
         footer={
           <>
             <Button size="sm" variant="ghost" onClick={dialog.close}>
-              Cancelar
+              Cancel
             </Button>
             <Button
               size="sm"
@@ -108,25 +108,25 @@ export default function Collections() {
               disabled={!name.trim()}
               onClick={submit}
             >
-              Crear
+              Create
             </Button>
           </>
         }
       >
         <div className="flex flex-col gap-4">
           <TextField
-            label="Nombre"
+            label="Name"
             value={name}
             maxLength={60}
             onChange={(e) => setName(e.target.value)}
           />
           <TextArea
-            label="Descripción"
+            label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <Checkbox
-            label="Pública — cualquiera con la liga puede verla"
+            label="Public — anyone with the link can see it"
             checked={isPublic}
             onChange={setIsPublic}
           />

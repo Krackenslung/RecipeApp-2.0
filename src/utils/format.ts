@@ -1,6 +1,6 @@
 /** Display helpers. Numbers in a recipe are data — they all render in mono. */
 
-const money = new Intl.NumberFormat('es-MX', {
+const money = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'MXN',
   maximumFractionDigits: 0,
@@ -9,7 +9,7 @@ const money = new Intl.NumberFormat('es-MX', {
 export function formatCost(value: number | null, currency = 'MXN'): string {
   if (value == null) return '—';
   if (currency === 'MXN') return money.format(value);
-  return new Intl.NumberFormat('es-MX', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
     maximumFractionDigits: 0,
@@ -25,9 +25,9 @@ export function formatMinutes(total: number | null): string {
 }
 
 export const DIFFICULTY_LABEL: Record<number, string> = {
-  1: 'Fácil',
-  2: 'Media',
-  3: 'Difícil',
+  1: 'Easy',
+  2: 'Medium',
+  3: 'Hard',
 };
 
 export function formatDifficulty(d: number | null): string {
@@ -45,12 +45,12 @@ export function formatRating(avg: number | null): string {
 export function formatQuantity(value: number | null): string {
   if (value == null) return '';
   const rounded = Math.round(value * 100) / 100;
-  return rounded.toLocaleString('es-MX', { maximumFractionDigits: 2 });
+  return rounded.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
 export function formatDate(iso: string | null): string {
   if (!iso) return '';
-  return new Date(iso).toLocaleDateString('es-MX', {
+  return new Date(iso).toLocaleDateString('en-US', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

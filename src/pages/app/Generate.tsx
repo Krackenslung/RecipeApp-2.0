@@ -17,10 +17,10 @@ import { formatElapsed } from '@/utils/format';
 
 /** What is actually happening, in order, so the wait has content. */
 const PHASES = [
-  { at: 0, text: 'Mandando tus filtros al modelo…' },
-  { at: 4_000, text: 'El modelo está escribiendo la receta…' },
-  { at: 14_000, text: 'Cuadrando ingredientes con el catálogo…' },
-  { at: 22_000, text: 'Calculando nutrición y costo…' },
+  { at: 0, text: 'Sending your filters to the model…' },
+  { at: 4_000, text: 'The model is writing the recipe…' },
+  { at: 14_000, text: 'Matching ingredients against the catalog…' },
+  { at: 22_000, text: 'Working out nutrition and cost…' },
 ];
 
 function phaseFor(ms: number): string {
@@ -49,7 +49,7 @@ export default function Generate() {
       { prompt: prompt.trim(), filters },
       {
         onSuccess: ({ request_id }) => setRequestId(request_id),
-        onError: () => toast('No pudimos empezar la generación.', 'error'),
+        onError: () => toast('We couldn’t start the generation.', 'error'),
       },
     );
   }
@@ -73,9 +73,9 @@ export default function Generate() {
         // under the results so it never scrolls away.
         <div className="flex flex-col gap-3">
           <TextArea
-            label="¿Algo más?"
-            placeholder="Para la cena, algo que aguante el recalentado…"
-            hint={`${countActive(filters)} ${countActive(filters) === 1 ? 'filtro activo' : 'filtros activos'}`}
+            label="Anything else?"
+            placeholder="For dinner, something that holds up reheated…"
+            hint={`${countActive(filters)} ${countActive(filters) === 1 ? 'filter activo' : 'filters activos'}`}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             disabled={running}
@@ -97,10 +97,10 @@ export default function Generate() {
     >
       <section className="flex flex-col gap-6">
         <header>
-          <h1 className="text-3xl font-semibold tracking-tight text-ink">Generar una receta</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">Generate a recipe</h1>
           <p className="mt-1 max-w-xl text-sm text-body">
-            Elige lo que tienes y lo que no quieres. Lo que salga es tuyo, en borrador, hasta que
-            decidas publicarlo.
+            Pick what you have and what you don’t want. Whatever comes out is yours, as a draft,
+            until you decide to publish it.
           </p>
         </header>
 
@@ -133,7 +133,7 @@ export default function Generate() {
               </span>
             </div>
             <p className="text-xs text-muted">
-              Normalmente tarda entre 20 y 30 segundos. Puedes dejar esta pestaña abierta.
+              It usually takes 20 to 30 seconds. You can leave this tab open.
             </p>
             {statusError && <p className="text-xs text-brand">{statusError}</p>}
           </div>
@@ -141,9 +141,9 @@ export default function Generate() {
 
         {done && row?.status === 'success' && (
           <div className="flex flex-col gap-3 rounded-card border border-success bg-surface px-5 py-6">
-            <h2 className="text-xl font-semibold text-ink">Lista, en borrador</h2>
+            <h2 className="text-xl font-semibold text-ink">Ready, as a draft</h2>
             <p className="text-sm text-body">
-              El modelo propone, tú publicas. Revísala y decide si la haces pública.
+              The model proposes, you publish. Look it over and decide whether to make it public.
             </p>
             <div className="flex gap-2">
               <Button
@@ -153,7 +153,7 @@ export default function Generate() {
                   else navigate('/me');
                 }}
               >
-                Ver la receta
+                View the recipe
               </Button>
               <Button
                 variant="ghost"
@@ -162,7 +162,7 @@ export default function Generate() {
                   start.reset();
                 }}
               >
-                Generar otra
+                Generate another
               </Button>
             </div>
           </div>
@@ -171,12 +171,12 @@ export default function Generate() {
         {done && row && row.status !== 'success' && (
           <div className="flex flex-col gap-3 rounded-card border border-brand bg-surface px-5 py-6">
             <h2 className="text-lg font-semibold text-brand">
-              {row.status === 'filtered' ? 'El modelo no quiso responder' : 'No salió'}
+              {row.status === 'filtered' ? 'The model declined to answer' : 'It didn’t work out'}
             </h2>
             <p className="text-sm text-body">
               {row.status === 'filtered'
-                ? 'Prueba con otra combinación de filtros.'
-                : 'Algo falló del otro lado. Tus filtros siguen puestos.'}
+                ? 'Try a different combination of filters.'
+                : 'Something failed on the other end. Your filters are still set.'}
             </p>
             <div>
               <Button
@@ -187,16 +187,16 @@ export default function Generate() {
                   submit();
                 }}
               >
-                Reintentar
+                Retry
               </Button>
             </div>
           </div>
         )}
 
         <p className="text-xs text-muted">
-          ¿Prefieres escribirla tú?{' '}
+          Rather write it yourself?{' '}
           <Link to="/me" className="text-brand no-underline hover:underline">
-            Crea una receta a mano
+            Create a recipe by hand
           </Link>
           .
         </p>

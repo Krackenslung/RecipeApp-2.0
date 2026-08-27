@@ -29,7 +29,7 @@ export function RangeField({ label, value, onChange, min, max, step = 1, format 
           {label}
         </label>
         <span className="font-mono text-xs text-muted">
-          {active ? format(value) : 'sin límite'}
+          {active ? format(value) : 'no limit'}
         </span>
       </div>
 
@@ -46,7 +46,7 @@ export function RangeField({ label, value, onChange, min, max, step = 1, format 
       />
 
       <Checkbox
-        label={<span className="text-xs text-muted">Aplicar este límite</span>}
+        label={<span className="text-xs text-muted">Apply this limit</span>}
         checked={active}
         onChange={(on) => onChange(on ? max : null)}
       />
@@ -63,15 +63,15 @@ type ServingsProps = {
 export function ServingsRange({ min, max, onChange }: ServingsProps) {
   return (
     <div className="flex flex-col">
-      <span className={FIELD_LABEL}>Porciones</span>
+      <span className={FIELD_LABEL}>Servings</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
           min={1}
           max={100}
           value={min ?? ''}
-          placeholder="mín"
-          aria-label="Porciones mínimas"
+          placeholder="min"
+          aria-label="Minimum servings"
           onChange={(e) =>
             onChange({ min: e.target.value === '' ? null : Number(e.target.value), max })
           }
@@ -83,8 +83,8 @@ export function ServingsRange({ min, max, onChange }: ServingsProps) {
           min={1}
           max={100}
           value={max ?? ''}
-          placeholder="máx"
-          aria-label="Porciones máximas"
+          placeholder="max"
+          aria-label="Maximum servings"
           onChange={(e) =>
             onChange({ min, max: e.target.value === '' ? null : Number(e.target.value) })
           }

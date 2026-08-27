@@ -52,11 +52,11 @@ export default function RecipeDetail() {
     const notFound = error instanceof Error && error.message === 'NOT_FOUND';
     return notFound ? (
       <EmptyState
-        title="Esta receta no existe"
-        message="O es privada y no es tuya."
+        title="This recipe doesn’t exist"
+        message="Or it’s private and not yours."
         action={
           <Link to="/" className="text-sm text-brand underline">
-            Volver a explorar
+            Back to browsing
           </Link>
         }
       />
@@ -77,7 +77,7 @@ export default function RecipeDetail() {
       {isDraft && isAuthor && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-brand bg-surface px-4 py-3">
           <p className="text-sm text-ink">
-            Esta receta es un borrador privado. El modelo propone, tú publicas.
+            This recipe is a private draft. The model proposes, you publish.
           </p>
           <Button
             variant="primary"
@@ -85,12 +85,12 @@ export default function RecipeDetail() {
             loading={publish.isPending}
             onClick={() =>
               publish.mutate(recipe.recipe_id, {
-                onSuccess: () => toast('Publicada', 'success'),
-                onError: () => toast('No pudimos publicarla. Inténtalo de nuevo.', 'error'),
+                onSuccess: () => toast('Published', 'success'),
+                onError: () => toast('We couldn’t publish it. Try again.', 'error'),
               })
             }
           >
-            Publicar
+            Publish
           </Button>
         </div>
       )}
@@ -106,27 +106,27 @@ export default function RecipeDetail() {
           <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-sm text-body">
             <div className="flex items-center gap-1.5">
               <Clock size={14} aria-hidden />
-              <dt className="sr-only">Tiempo total</dt>
+              <dt className="sr-only">Total time</dt>
               <dd>{formatMinutes(recipe.total_minutes)}</dd>
             </div>
             <div className="flex items-center gap-1.5">
               <Users size={14} aria-hidden />
-              <dt className="sr-only">Porciones originales</dt>
+              <dt className="sr-only">Servings originales</dt>
               <dd>{recipe.servings}</dd>
             </div>
             <div>
-              <dt className="sr-only">Dificultad</dt>
+              <dt className="sr-only">Difficulty</dt>
               <dd className="font-body">{formatDifficulty(recipe.difficulty)}</dd>
             </div>
             {recipe.est_cost != null && (
               <div>
-                <dt className="sr-only">Costo estimado</dt>
+                <dt className="sr-only">Cost estimado</dt>
                 <dd>{formatCost(recipe.est_cost * factor, recipe.currency)}</dd>
               </div>
             )}
             {recipe.rating_count > 0 && (
               <div className="flex items-center gap-1.5">
-                <dt className="sr-only">Calificación</dt>
+                <dt className="sr-only">Rating</dt>
                 <dd>
                   {formatRating(recipe.rating_avg)} ★{' '}
                   <span className="text-muted">({recipe.rating_count})</span>
@@ -144,14 +144,14 @@ export default function RecipeDetail() {
                 }
               >
                 <Bookmark size={14} fill={saved ? 'currentColor' : 'none'} aria-hidden />
-                {saved ? 'Guardada' : 'Guardar'}
+                {saved ? 'Saved' : 'Save'}
               </Button>
             )}
 
             {user && (
               <Button size="sm" onClick={collectionDialog.show}>
                 <FolderPlus size={14} aria-hidden />
-                A una colección
+                To a collection
               </Button>
             )}
 
@@ -160,11 +160,11 @@ export default function RecipeDetail() {
               variant="ghost"
               onClick={async () => {
                 await navigator.clipboard.writeText(window.location.href);
-                toast('Liga copiada', 'success');
+                toast('Link copied', 'success');
               }}
             >
               <Share2 size={14} aria-hidden />
-              Compartir
+              Share
             </Button>
 
             {isAuthor && (
@@ -172,7 +172,7 @@ export default function RecipeDetail() {
                 to={`/r/${recipe.slug}/edit`}
                 className="text-sm text-body underline transition-colors hover:text-ink"
               >
-                Editar
+                Edit
               </Link>
             )}
           </div>
@@ -201,7 +201,7 @@ export default function RecipeDetail() {
               <NutritionCell label="gras" value={nutrition.fat_g} suffix="g" />
               {nutrition.is_estimated && (
                 <p className="col-span-4 border-t border-hairline px-2 py-1.5 text-[10px] text-muted">
-                  Estimado por porción, calculado desde los ingredientes.
+                  Estimated per serving, derived from the ingredients.
                 </p>
               )}
             </dl>
@@ -213,7 +213,7 @@ export default function RecipeDetail() {
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-3">
             {/* v1's section headings: uppercase, red, quiet. */}
-            <h2 className="mb-1.5 text-sm font-semibold uppercase text-brand">Ingredientes</h2>
+            <h2 className="mb-1.5 text-sm font-semibold uppercase text-brand">Ingredients</h2>
             <ServingsStepper value={servings} base={recipe.servings} onChange={setServings} />
           </div>
 
@@ -225,22 +225,22 @@ export default function RecipeDetail() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="mb-1.5 text-sm font-semibold uppercase text-brand">Preparación</h2>
+          <h2 className="mb-1.5 text-sm font-semibold uppercase text-brand">Method</h2>
           <StepList steps={recipe.recipe_steps} />
         </section>
       </div>
 
       <section className="flex flex-col gap-3 border-t border-line pt-8">
         <h2 className="text-xl font-semibold text-ink">
-          ¿Qué tal quedó?
+          How did it turn out?
         </h2>
         {user ? (
           <RatingStars
             value={myRating ?? null}
             onRate={(n) =>
               rate.mutate(n, {
-                onSuccess: () => toast('Calificada', 'success'),
-                onError: () => toast('No pudimos guardar tu calificación.', 'error'),
+                onSuccess: () => toast('Rated', 'success'),
+                onError: () => toast('We couldn’t save your rating.', 'error'),
               })
             }
             onClear={() => unrate.mutate()}
@@ -248,9 +248,9 @@ export default function RecipeDetail() {
         ) : (
           <p className="text-sm text-body">
             <Link to="/login" className="text-brand underline">
-              Entra
+              Sign in
             </Link>{' '}
-            para calificar y guardar recetas.
+            to rate and save recipes.
           </p>
         )}
       </section>
@@ -259,11 +259,11 @@ export default function RecipeDetail() {
 
       <Dialog
         dialogRef={collectionDialog.ref}
-        title="Guardar en una colección"
+        title="Save to a collection"
         onClose={collectionDialog.close}
         footer={
           <Button size="sm" onClick={collectionDialog.close}>
-            Cerrar
+            Close
           </Button>
         }
       >
@@ -288,14 +288,14 @@ export default function RecipeDetail() {
                   className="w-full rounded-card border border-line-strong px-3 py-2 text-left text-sm text-body transition-colors hover:bg-hairline"
                 >
                   {c.name}
-                  {!c.is_public && <span className="ml-2 text-xs text-body">privada</span>}
+                  {!c.is_public && <span className="ml-2 text-xs text-body">private</span>}
                 </button>
               </li>
             ))}
           </ul>
         ) : (
           <p className="text-sm text-body">
-            Todavía no tienes colecciones.{' '}
+            You don’t have any collections yet.{' '}
             <Link to="/me/collections" className="text-brand underline">
               Crea una
             </Link>

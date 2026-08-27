@@ -18,7 +18,7 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
 
   return (
     <section className="flex flex-col gap-4 border-t border-line pt-8">
-      <h2 className="text-xl font-semibold text-ink">Comentarios</h2>
+      <h2 className="text-xl font-semibold text-ink">Comments</h2>
 
       {user ? (
         <form
@@ -31,43 +31,43 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
               {
                 onSuccess: () => {
                   setBody('');
-                  toast('Comentario publicado', 'success');
+                  toast('Comment posted', 'success');
                 },
-                onError: () => toast('No pudimos publicar tu comentario.', 'error'),
+                onError: () => toast('We couldn’t post your comment.', 'error'),
               },
             );
           }}
         >
           <label htmlFor="comment-body" className="sr-only">
-            Tu comentario
+            Your comment
           </label>
           <textarea
             id="comment-body"
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="¿Cómo te quedó? ¿Cambiaste algo?"
+            placeholder="How did it turn out? Did you change anything?"
             className={cx(FIELD_CONTROL, 'min-h-20 resize-y')}
           />
           <div className="flex justify-end">
             <Button type="submit" size="sm" loading={post.isPending} disabled={!body.trim()}>
-              Comentar
+              Comment
             </Button>
           </div>
         </form>
       ) : (
         <p className="text-sm text-body">
           <Link to="/login" className="text-brand underline">
-            Entra
+            Sign in
           </Link>{' '}
           para comentar.
         </p>
       )}
 
       {isLoading && <Spinner />}
-      {isError && <p className="text-sm text-body">No pudimos cargar los comentarios.</p>}
+      {isError && <p className="text-sm text-body">We couldn’t load the comments.</p>}
 
       {comments && comments.length === 0 && (
-        <p className="text-sm text-body">Nadie ha comentado todavía.</p>
+        <p className="text-sm text-body">Nobody has commented yet.</p>
       )}
 
       <ul className="flex flex-col gap-5">
@@ -110,13 +110,13 @@ function Comment({
               {node.author.display_name ?? node.author.username}
             </Link>
           ) : (
-            <span className="text-sm text-body">Alguien</span>
+            <span className="text-sm text-body">Someone</span>
           )}
           <span className="font-mono text-xs text-body">{formatDate(node.created_at)}</span>
         </div>
 
         {deleted ? (
-          <p className="text-sm italic text-body">Comentario eliminado.</p>
+          <p className="text-sm italic text-body">Comment deleted.</p>
         ) : (
           <p className="text-sm leading-relaxed text-ink">{node.body}</p>
         )}
@@ -129,7 +129,7 @@ function Comment({
                 onClick={() => setReplying((v) => !v)}
                 className="transition-colors hover:text-ink"
               >
-                Responder
+                Reply
               </button>
             )}
             {user?.id === node.user_id && (
@@ -138,7 +138,7 @@ function Comment({
                 onClick={() => remove.mutate(node.comment_id)}
                 className="transition-colors hover:text-brand"
               >
-                Eliminar
+                Delete
               </button>
             )}
           </div>
@@ -162,7 +162,7 @@ function Comment({
             }}
           >
             <label htmlFor={`reply-${node.comment_id}`} className="sr-only">
-              Tu respuesta
+              Your reply
             </label>
             <textarea
               id={`reply-${node.comment_id}`}
@@ -172,10 +172,10 @@ function Comment({
             />
             <div className="flex justify-end gap-2">
               <Button type="button" size="sm" variant="ghost" onClick={() => setReplying(false)}>
-                Cancelar
+                Cancel
               </Button>
               <Button type="submit" size="sm" loading={post.isPending} disabled={!reply.trim()}>
-                Responder
+                Reply
               </Button>
             </div>
           </form>

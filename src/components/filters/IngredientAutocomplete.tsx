@@ -27,7 +27,7 @@ type Props = {
  */
 export function IngredientAutocomplete({
   label,
-  placeholder = 'Escribe un ingrediente',
+  placeholder = 'Type an ingredient',
   tone = 'neutral',
   value,
   onChange,
@@ -145,7 +145,7 @@ export function IngredientAutocomplete({
                 >
                   {hit.name}
                   {!hit.is_verified && (
-                    <span className="text-xs text-muted">sin verificar</span>
+                    <span className="text-xs text-muted">unverified</span>
                   )}
                 </button>
               </li>

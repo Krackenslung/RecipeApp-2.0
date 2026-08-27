@@ -9,7 +9,7 @@ const TONES: Record<Tone, { off: string; on: string }> = {
     off: 'border-line-strong bg-surface text-body hover:bg-hairline',
     on: 'border-brand bg-brand text-white',
   },
-  // Dietary badges carry the success green.
+  // Dietry badges carry the success green.
   diet: {
     off: 'border-line-strong bg-surface text-body hover:bg-hairline',
     on: 'border-success bg-success text-white',

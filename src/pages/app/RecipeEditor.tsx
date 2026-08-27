@@ -63,11 +63,11 @@ export default function RecipeEditor() {
   if (user?.id !== recipe.author_id) {
     return (
       <EmptyState
-        title="Esta receta no es tuya"
-        message="Solo quien la creó puede editarla."
+        title="This recipe isn’t yours"
+        message="Only whoever created it can edit it."
         action={
           <Link to={`/r/${recipe.slug}`} className="text-sm text-brand underline">
-            Ver la receta
+            View the recipe
           </Link>
         }
       />
@@ -92,8 +92,8 @@ export default function RecipeEditor() {
         },
       },
       {
-        onSuccess: () => toast('Guardada', 'success'),
-        onError: () => toast('No pudimos guardar los cambios.', 'error'),
+        onSuccess: () => toast('Saved', 'success'),
+        onError: () => toast('We couldn’t save your changes.', 'error'),
       },
     );
   }
@@ -104,10 +104,10 @@ export default function RecipeEditor() {
       {
         onSuccess: ({ publicUrl }) => {
           setForm((f) => ({ ...f, coverImageUrl: publicUrl }));
-          toast('Foto subida. Guarda para aplicarla.', 'success');
+          toast('Photo uploaded. Save to apply it.', 'success');
         },
         onError: (e) =>
-          toast(e instanceof UploadError ? e.message : 'No pudimos subir la foto.', 'error'),
+          toast(e instanceof UploadError ? e.message : 'We couldn’t upload the photo.', 'error'),
       },
     );
   }
@@ -117,12 +117,12 @@ export default function RecipeEditor() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold text-ink">
-            Editar receta
+            Edit recipe
           </h1>
           <p className="mt-1 text-sm text-body">
-            {isDraft ? 'Borrador privado' : 'Publicada'} ·{' '}
+            {isDraft ? 'Private draft' : 'Published'} ·{' '}
             <Link to={`/r/${recipe.slug}`} className="text-brand underline">
-              Ver
+              View
             </Link>
           </p>
         </div>
@@ -133,12 +133,12 @@ export default function RecipeEditor() {
             loading={publish.isPending}
             onClick={() =>
               publish.mutate(recipe.recipe_id, {
-                onSuccess: () => toast('Publicada', 'success'),
-                onError: () => toast('No pudimos publicarla.', 'error'),
+                onSuccess: () => toast('Published', 'success'),
+                onError: () => toast('We couldn’t publish it.', 'error'),
               })
             }
           >
-            Publicar
+            Publish
           </Button>
         )}
       </header>
@@ -151,7 +151,7 @@ export default function RecipeEditor() {
         }}
       >
         <TextField
-          label="Título"
+          label="Title"
           required
           maxLength={120}
           value={form.title}
@@ -159,15 +159,15 @@ export default function RecipeEditor() {
         />
 
         <TextArea
-          label="Resumen"
-          hint="Es lo que se lee en la tarjeta."
+          label="Summary"
+          hint="This is what reads on the card."
           value={form.summary}
           onChange={(e) => setForm({ ...form, summary: e.target.value })}
         />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <TextField
-            label="Porciones"
+            label="Servings"
             type="number"
             min={1}
             max={100}
@@ -187,7 +187,7 @@ export default function RecipeEditor() {
             }
           />
           <TextField
-            label="Cocción (min)"
+            label="Cook (min)"
             type="number"
             min={0}
             mono
@@ -197,7 +197,7 @@ export default function RecipeEditor() {
             }
           />
           <TextField
-            label={`Costo (${recipe.currency})`}
+            label={`Cost (${recipe.currency})`}
             type="number"
             min={0}
             step={1}
@@ -210,20 +210,20 @@ export default function RecipeEditor() {
         </div>
 
         <SelectField
-          label="Dificultad"
+          label="Difficulty"
           value={form.difficulty}
           onChange={(e) =>
             setForm({ ...form, difficulty: e.target.value === '' ? '' : Number(e.target.value) })
           }
         >
-          <option value="">Sin especificar</option>
-          <option value={1}>Fácil</option>
-          <option value={2}>Media</option>
-          <option value={3}>Difícil</option>
+          <option value="">Unspecified</option>
+          <option value={1}>Easy</option>
+          <option value={2}>Medium</option>
+          <option value={3}>Hard</option>
         </SelectField>
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-body">Foto</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-body">Photo</span>
 
           {form.coverImageUrl && (
             <img
@@ -253,7 +253,7 @@ export default function RecipeEditor() {
               onClick={() => fileInput.current?.click()}
             >
               <Upload size={14} aria-hidden />
-              Subir una foto
+              Upload a photo
             </Button>
             {form.coverImageUrl && (
               <Button
@@ -265,21 +265,21 @@ export default function RecipeEditor() {
                 Quitar
               </Button>
             )}
-            <span className="text-xs text-body">JPG, PNG, WebP o AVIF. Hasta 5 MB.</span>
+            <span className="text-xs text-body">JPG, PNG, WebP or AVIF. Up to 5 MB.</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-line-strong pt-5">
           <Button type="button" variant="danger" size="sm" onClick={deleteDialog.show}>
-            Eliminar receta
+            Delete recipe
           </Button>
 
           <div className="flex gap-2">
             <Button type="button" variant="ghost" onClick={() => navigate(`/r/${recipe.slug}`)}>
-              Cancelar
+              Cancel
             </Button>
             <Button type="submit" variant="primary" loading={update.isPending}>
-              Guardar
+              Save
             </Button>
           </div>
         </div>
@@ -287,12 +287,12 @@ export default function RecipeEditor() {
 
       <Dialog
         dialogRef={deleteDialog.ref}
-        title="¿Eliminar esta receta?"
+        title="Delete this recipe?"
         onClose={deleteDialog.close}
         footer={
           <>
             <Button size="sm" variant="ghost" onClick={deleteDialog.close}>
-              Cancelar
+              Cancel
             </Button>
             <Button
               size="sm"
@@ -301,21 +301,20 @@ export default function RecipeEditor() {
               onClick={() =>
                 remove.mutate(recipe.recipe_id, {
                   onSuccess: () => {
-                    toast('Eliminada', 'success');
+                    toast('Deleted', 'success');
                     navigate('/me');
                   },
-                  onError: () => toast('No pudimos eliminarla.', 'error'),
+                  onError: () => toast('We couldn’t delete it.', 'error'),
                 })
               }
             >
-              Eliminar
+              Delete
             </Button>
           </>
         }
       >
         <p>
-          Deja de aparecer en el feed y en las colecciones. Los comentarios y las calificaciones se
-          conservan.
+          It stops showing up in the feed and in collections. Comments and ratings are kept.
         </p>
       </Dialog>
     </div>

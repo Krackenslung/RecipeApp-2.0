@@ -19,7 +19,7 @@ const COST_LEVELS: { label: string; cap: number }[] = [
   { label: '$$$', cap: 600 },
 ];
 
-const DIFFICULTY_LABELS = ['Fácil', 'Media', 'Difícil'] as const;
+const DIFFICULTY_LABELS = ['Easy', 'Medium', 'Hard'] as const;
 
 type Props = {
   /** The sidebar edits `draft`. Only `applied` ever reaches the query key. */
@@ -63,7 +63,7 @@ export function FilterSidebar({
       }}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold text-ink">Filtros</h2>
+        <h2 className="text-lg font-semibold text-ink">Filters</h2>
         {active > 0 && (
           <button
             type="button"
@@ -71,20 +71,20 @@ export function FilterSidebar({
             className="inline-flex items-center gap-1 text-xs text-body transition-colors hover:text-ink"
           >
             <X size={12} aria-hidden />
-            Limpiar {active}
+            Clear {active}
           </button>
         )}
       </div>
 
       {seeded && (
         <p className="rounded-card border border-success px-3 py-2 text-xs text-success">
-          Pre-llenamos dietas y alérgenos con tus preferencias. Puedes quitarlos.
+          We pre-filled diets and allergens from your preferences. You can remove them.
         </p>
       )}
 
       <div>
         <label htmlFor="filter-search" className={FIELD_LABEL}>
-          Buscar
+          Search
         </label>
         <div className="relative">
           <Search
@@ -106,26 +106,26 @@ export function FilterSidebar({
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-body">
           <Spinner />
-          Cargando catálogo…
+          Loading catalog…
         </div>
       ) : (
         <>
           <IngredientAutocomplete
-            label="Con estos ingredientes"
+            label="With these ingredients"
             value={draft.includeIngredients}
             onChange={(v) => set('includeIngredients', v)}
           />
 
           <IngredientAutocomplete
-            label="Sin estos ingredientes"
+            label="Without these ingredients"
             tone="accent"
-            placeholder="Ingrediente a excluir"
+            placeholder="Ingredient to exclude"
             value={draft.excludeIngredients}
             onChange={(v) => set('excludeIngredients', v)}
           />
 
           <TagGroup
-            label="Cocina"
+            label="Cuisine"
             combinator="ANY"
             items={cuisines.map((c) => ({ id: c.cuisine_id, name: c.name }))}
             value={draft.cuisines}
@@ -133,7 +133,7 @@ export function FilterSidebar({
           />
 
           <TagGroup
-            label="Tiempo de comida"
+            label="Meal type"
             combinator="ANY"
             items={mealTypes.map((m) => ({ id: m.meal_type_id, name: m.name }))}
             value={draft.mealTypes}
@@ -141,7 +141,7 @@ export function FilterSidebar({
           />
 
           <TagGroup
-            label="Dieta"
+            label="Diet"
             tone="diet"
             combinator="ALL"
             items={diets.map((d) => ({ id: d.diet_id, name: d.name }))}
@@ -149,23 +149,23 @@ export function FilterSidebar({
             onChange={(v) => set('diets', v)}
             note={
               draft.diets.length > 1
-                ? 'La receta tiene que cumplir las dietas al mismo tiempo.'
+                ? 'The recipe has to satisfy every diet at once.'
                 : undefined
             }
           />
 
           <TagGroup
-            label="Sin alérgenos"
+            label="Without allergens"
             tone="accent"
             combinator="NONE"
             items={allergens.map((a) => ({ id: a.allergen_id, name: a.name }))}
             value={draft.excludeAllergens}
             onChange={(v) => set('excludeAllergens', v)}
-            note="Se calcula desde los ingredientes, incluso los opcionales."
+            note="Derived from the ingredients, optional ones included."
           />
 
           <TagGroup
-            label="Equipo"
+            label="Equipment"
             combinator="ALL"
             items={equipment.map((e) => ({ id: e.equipment_id, name: e.name }))}
             value={draft.equipment}
@@ -175,7 +175,7 @@ export function FilterSidebar({
       )}
 
       <RangeField
-        label="Tiempo total"
+        label="Total time"
         value={draft.maxMinutes}
         onChange={(v) => set('maxMinutes', v)}
         min={10}
@@ -185,7 +185,7 @@ export function FilterSidebar({
       />
 
       <RangeField
-        label="Calorías por porción"
+        label="Calories per serving"
         value={draft.maxCalories}
         onChange={(v) => set('maxCalories', v)}
         min={100}
@@ -195,7 +195,7 @@ export function FilterSidebar({
       />
 
       <fieldset className="flex flex-col gap-2">
-        <legend className={FIELD_LABEL}>Costo máximo</legend>
+        <legend className={FIELD_LABEL}>Maximum cost</legend>
         <div className="flex gap-1.5">
           {COST_LEVELS.map(({ label, cap }) => (
             <Button
@@ -211,7 +211,7 @@ export function FilterSidebar({
           ))}
         </div>
         <Checkbox
-          label={<span className="text-xs text-muted">Por porción, no por receta</span>}
+          label={<span className="text-xs text-muted">Per serving, not per recipe</span>}
           checked={draft.costPerServing}
           disabled={draft.maxCost == null}
           onChange={(v) => set('costPerServing', v)}
@@ -225,7 +225,7 @@ export function FilterSidebar({
       />
 
       <fieldset className="flex flex-col gap-2">
-        <legend className={FIELD_LABEL}>Dificultad máxima</legend>
+        <legend className={FIELD_LABEL}>Maximum difficulty</legend>
         <div className="flex gap-1.5">
           {([1, 2, 3] as const).map((d) => (
             <Button
@@ -243,7 +243,7 @@ export function FilterSidebar({
       </fieldset>
 
       <RangeField
-        label="Calificación mínima"
+        label="Minimum rating"
         value={draft.minRating}
         onChange={(v) => set('minRating', v)}
         min={1}
@@ -254,11 +254,11 @@ export function FilterSidebar({
 
       <div className="sticky bottom-0 flex flex-col gap-2 bg-surface pb-1 pt-2">
         <Button type="submit" variant="primary" loading={searching} disabled={!dirty && !searching}>
-          {dirty ? 'Buscar' : 'Resultados al día'}
+          {dirty ? 'Search' : 'Results are current'}
         </Button>
         {draft !== EMPTY_FILTERS && active > 0 && (
           <Button type="button" variant="ghost" size="sm" onClick={onReset}>
-            Limpiar filtros
+            Clear filters
           </Button>
         )}
       </div>

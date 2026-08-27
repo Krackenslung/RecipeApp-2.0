@@ -18,11 +18,11 @@ export default function CollectionDetail() {
     const notFound = error instanceof Error && error.message === 'NOT_FOUND';
     return notFound ? (
       <EmptyState
-        title="Esta colección no existe"
-        message="O es privada y no es tuya."
+        title="This collection doesn’t exist"
+        message="Or it’s private and not yours."
         action={
           <Link to="/" className="text-sm text-brand underline">
-            Volver a explorar
+            Back to browsing
           </Link>
         }
       />
@@ -43,22 +43,22 @@ export default function CollectionDetail() {
             {collection.name}
           </h1>
           {!collection.is_public && (
-            <Lock size={16} className="text-body" aria-label="Privada" />
+            <Lock size={16} className="text-body" aria-label="Private" />
           )}
         </div>
         {collection.description && (
           <p className="max-w-2xl text-sm text-body">{collection.description}</p>
         )}
         <p className="font-mono text-xs text-body">
-          {recipes.length} {recipes.length === 1 ? 'receta' : 'recetas'}
+          {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
         </p>
       </header>
 
       {recipes.length === 0 ? (
         <EmptyState
-          title="Colección vacía"
-          message="Desde cualquier receta puedes agregarla aquí."
-          action={<ButtonLink to="/">Explorar recetas</ButtonLink>}
+          title="Empty collection"
+          message="You can add one here from any recipe."
+          action={<ButtonLink to="/">Browse recipes</ButtonLink>}
         />
       ) : (
         <div className="grid animate-fade-in grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -68,7 +68,7 @@ export default function CollectionDetail() {
               {isOwner && (
                 <button
                   type="button"
-                  aria-label={`Quitar ${r.title} de la colección`}
+                  aria-label={`Remove ${r.title} from the collection`}
                   onClick={() =>
                     remove.mutate({ collectionId: collection.collection_id, recipeId: r.recipe_id })
                   }

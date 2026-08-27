@@ -18,11 +18,11 @@ import {
 } from '@/utils/filterArgs';
 
 const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'recent', label: 'Recientes' },
-  { key: 'rating', label: 'Mejor calificadas' },
-  { key: 'quick', label: 'Más rápidas' },
-  { key: 'cheap', label: 'Más baratas' },
-  { key: 'popular', label: 'Más guardadas' },
+  { key: 'recent', label: 'Recent' },
+  { key: 'rating', label: 'Top rated' },
+  { key: 'quick', label: 'Quickest' },
+  { key: 'cheap', label: 'Cheapest' },
+  { key: 'popular', label: 'Most saved' },
 ];
 
 export default function Feed() {
@@ -105,17 +105,17 @@ export default function Feed() {
       <section className="flex flex-col gap-5">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-ink">Recetas</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-ink">Recipes</h1>
             <p className="mt-1 text-sm text-body">
               {query.isLoading
-                ? 'Buscando…'
+                ? 'Searching…'
                 : `${recipes.length}${query.hasNextPage ? '+' : ''} ${
-                    recipes.length === 1 ? 'receta' : 'recetas'
+                    recipes.length === 1 ? 'recipe' : 'recipes'
                   }`}
               {activeCount > 0 && (
                 <span className="text-muted">
                   {' '}
-                  · {activeCount} {activeCount === 1 ? 'filtro' : 'filtros'} activos
+                  · {activeCount} active {activeCount === 1 ? 'filter' : 'filters'}
                 </span>
               )}
             </p>
@@ -123,7 +123,7 @@ export default function Feed() {
 
           <div className="flex items-center gap-2">
             <label className="sr-only" htmlFor="sort">
-              Ordenar
+              Sort
             </label>
             <select
               id="sort"
@@ -144,15 +144,15 @@ export default function Feed() {
           <SkeletonGrid />
         ) : query.isError ? (
           <ErrorState
-            message="No pudimos cargar las recetas."
+            message="We couldn’t load the recipes."
             onRetry={() => void query.refetch()}
           />
         ) : recipes.length === 0 ? (
           <EmptyState
-            title={narrowest ? 'Nada con esos filtros' : 'Todavía no hay recetas'}
+            title={narrowest ? 'Nothing matches those filters' : 'No recipes yet'}
             message={
               narrowest?.message ??
-              'Genera la primera y aparecerá aquí en cuanto la publiques.'
+              'Generate the first one and it shows up here as soon as you publish it.'
             }
             action={
               narrowest && (
@@ -200,7 +200,7 @@ export default function Feed() {
 
             {query.isFetchingNextPage && <SkeletonGrid count={3} />}
             {!query.hasNextPage && recipes.length > 0 && (
-              <p className="py-4 text-center text-xs text-muted">Es todo por ahora.</p>
+              <p className="py-4 text-center text-xs text-muted">That’s everything for now.</p>
             )}
           </>
         )}

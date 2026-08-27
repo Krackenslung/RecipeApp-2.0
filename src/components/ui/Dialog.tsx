@@ -41,7 +41,7 @@ export function Dialog({ dialogRef, title, onClose, children, footer }: Props) {
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
-            aria-label="Cerrar"
+            aria-label="Close"
             className="text-muted transition-colors hover:text-ink"
           >
             <X size={18} aria-hidden />

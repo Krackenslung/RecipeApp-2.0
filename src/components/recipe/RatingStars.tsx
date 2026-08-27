@@ -38,7 +38,7 @@ export function RatingStars({ value, onRate, onClear, readOnly = false, size = 2
           <button
             key={n}
             type="button"
-            aria-label={`${n} ${n === 1 ? 'estrella' : 'estrellas'}`}
+            aria-label={`${n} ${n === 1 ? 'star' : 'stars'}`}
             aria-pressed={value === n}
             onMouseEnter={() => setHover(n)}
             onFocus={() => setHover(n)}

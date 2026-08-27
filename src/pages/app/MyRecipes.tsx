@@ -37,15 +37,15 @@ export default function MyRecipes() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold text-ink">
-            {profile?.display_name ?? profile?.username ?? 'Mis recetas'}
+            {profile?.display_name ?? profile?.username ?? 'Mis recipes'}
           </h1>
           <p className="mt-1 text-sm text-body">
-            {recipes.length} {recipes.length === 1 ? 'receta' : 'recetas'}
-            {drafts.length > 0 && ` · ${drafts.length} en borrador`}
+            {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'}
+            {drafts.length > 0 && ` · ${drafts.length} in draft`}
           </p>
         </div>
         <ButtonLink to="/generate" variant="primary" size="sm">
-          Generar una
+          Generate one
         </ButtonLink>
       </header>
 
@@ -55,11 +55,11 @@ export default function MyRecipes() {
         <ErrorState onRetry={() => void query.refetch()} />
       ) : recipes.length === 0 ? (
         <EmptyState
-          title="Todavía no tienes recetas"
-          message="Genera la primera y aparecerá aquí como borrador."
+          title="You don’t have any recipes yet"
+          message="Generate your first one and it shows up here as a draft."
           action={
             <ButtonLink to="/generate" variant="primary">
-              Generar una receta
+              Generate a recipe
             </ButtonLink>
           }
         />

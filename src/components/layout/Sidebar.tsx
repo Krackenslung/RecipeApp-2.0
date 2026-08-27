@@ -22,34 +22,34 @@ export function Sidebar() {
   const { data: isModerator } = useHasRole('moderator');
 
   return (
-    <nav aria-label="Principal" className="flex flex-col gap-1 p-3">
+    <nav aria-label="Main" className="flex flex-col gap-1 p-3">
       <Item to="/" end icon={<Home size={20} aria-hidden />}>
-        Inicio
+        Home
       </Item>
       <Item to="/generate" icon={<Sparkles size={20} aria-hidden />}>
-        Generar receta
+        Generate recipe
       </Item>
 
       {user && (
         <>
           <Item to="/me" icon={<History size={20} aria-hidden />}>
-            Historial
+            History
           </Item>
           <Item to="/me/collections" icon={<Library size={20} aria-hidden />}>
-            Colecciones
+            Collections
           </Item>
           <Item to="/me/saved" icon={<Bookmark size={20} aria-hidden />}>
-            Guardadas
+            Saved
           </Item>
           <Item to="/settings" icon={<Settings size={20} aria-hidden />}>
-            Ajustes
+            Settings
           </Item>
         </>
       )}
 
       {isModerator && (
         <Item to="/moderation" icon={<ShieldCheck size={20} aria-hidden />}>
-          Moderación
+          Moderation
         </Item>
       )}
     </nav>

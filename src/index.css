@@ -1,43 +1,43 @@
 @import "tailwindcss";
 
 @theme {
-  /* Texto */
-  --color-ink:          #1a1a1a;   /* títulos, nombres de receta */
-  --color-body:         #555555;   /* párrafo, labels, nav inactivo */
-  --color-muted:        #888888;   /* metadatos, footer de tarjeta */
+  /* Text */
+  --color-ink:          #1a1a1a;   /* headings, recipe names */
+  --color-body:         #555555;   /* body copy, labels, inactive nav */
+  --color-muted:        #888888;   /* metadata, card footer */
 
-  /* Superficies */
-  --color-surface:      #ffffff;   /* header, sidebar, tarjetas, rail de filtros */
-  --color-canvas:       #f8f9fa;   /* fondo del área de contenido */
+  /* Surfaces */
+  --color-surface:      #ffffff;   /* header, sidebar, cards, filter rail */
+  --color-canvas:       #f8f9fa;   /* content area background */
 
-  /* Bordes — tres pesos, no uno */
+  /* Borders — three weights, not one */
   --color-line:         #e9ecef;   /* chrome: header, sidebar, rails */
-  --color-line-strong:  #dddddd;   /* borde de tarjeta */
-  --color-hairline:     #f0f0f0;   /* separadores internos, fondo de chip */
+  --color-line-strong:  #dddddd;   /* card border */
+  --color-hairline:     #f0f0f0;   /* internal rules, chip background */
 
-  /* Acento */
+  /* Accent */
   --color-brand:        #e74c3c;
-  --color-brand-dark:   #c0392b;   /* hover del botón primario */
-  --color-brand-soft:   #fdecea;   /* fondo del nav activo */
-  --color-success:      #198754;   /* nivel de costo seleccionado */
+  --color-brand-dark:   #c0392b;   /* primary button hover */
+  --color-brand-soft:   #fdecea;   /* active nav background */
+  --color-success:      #198754;   /* selected cost level */
 
-  /* Radios */
+  /* Radii */
   --radius-card:        8px;
   --radius-chip:        4px;
 
-  /* Elevación — un solo peso, en el idioma de Bootstrap que usaba la 1.0.
-     Va aquí y no suelto en las clases: la sombra de tarjeta se usa en cuatro
-     sitios y tiene que ser la misma en todos. */
+  /* Elevation — a single weight, in the Bootstrap idiom v1 used. It lives
+     here rather than loose in the classes: the card shadow is used in four
+     places and has to be identical in all of them. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 2px 6px rgb(0 0 0 / 0.06);
 
-  /* Tipografía */
+  /* Typography */
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 @layer base {
   html {
-    /* La 1.0 es sólo claro. No hay variantes dark:. */
+    /* v1 is light-only. There are no dark: variants. */
     color-scheme: light;
     background-color: var(--color-canvas);
     color: var(--color-ink);

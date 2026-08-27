@@ -4,7 +4,7 @@ import { formatMinutes } from '@/utils/format';
 
 export function StepList({ steps }: { steps: RecipeStep[] }) {
   if (!steps.length) {
-    return <p className="text-sm text-body">Esta receta todavía no tiene pasos.</p>;
+    return <p className="text-sm text-body">This recipe has no steps yet.</p>;
   }
 
   return (

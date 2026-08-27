@@ -5,7 +5,7 @@ type Tone = 'success' | 'error' | 'info';
 type Toast = { id: number; message: string; tone: Tone };
 
 type ToastApi = {
-  /** The button that says "Publicar" produces a toast that says "Publicada". */
+  /** The button that says "Publish" produces a toast that says "Published". */
   toast: (message: string, tone?: Tone) => void;
 };
 

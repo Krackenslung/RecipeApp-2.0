@@ -27,7 +27,7 @@ export function TwoPaneLayout({ children, filters, footer }: Props) {
         <div className="mb-4 flex justify-end lg:hidden">
           <Button size="sm" variant="secondary" onClick={dialog.show}>
             <SlidersHorizontal size={16} aria-hidden />
-            Filtros
+            Filters
           </Button>
         </div>
         {children}
@@ -40,7 +40,7 @@ export function TwoPaneLayout({ children, filters, footer }: Props) {
       )}
 
       <aside
-        aria-label="Filtros"
+        aria-label="Filters"
         className="hidden lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block lg:w-[500px] lg:overflow-y-auto lg:border-l lg:border-line lg:bg-surface lg:px-3 lg:py-4"
       >
         {filters}
@@ -48,7 +48,7 @@ export function TwoPaneLayout({ children, filters, footer }: Props) {
 
       {/* Mounted always so showModal() has an element; filled only when open,
           so the rail is never live in two places at once. */}
-      <Dialog dialogRef={dialog.ref} title="Filtros" onClose={dialog.close}>
+      <Dialog dialogRef={dialog.ref} title="Filters" onClose={dialog.close}>
         {dialog.open ? filters : null}
       </Dialog>
     </div>

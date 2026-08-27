@@ -6,7 +6,7 @@ export function Spinner({ className }: { className?: string }) {
   return (
     <span
       role="status"
-      aria-label="Cargando"
+      aria-label="Loading"
       className={cx(
         'inline-block h-4 w-4 animate-spin rounded-full border-2 border-line-strong border-t-brand',
         className,
@@ -66,8 +66,8 @@ export function EmptyState({
 
 /** Never surfaces the raw Postgres or Gemini error — that goes to the console. */
 export function ErrorState({
-  title = 'Algo salió mal',
-  message = 'No pudimos cargar esto. Inténtalo de nuevo.',
+  title = 'Something went wrong',
+  message = 'We couldn’t load this. Try again.',
   onRetry,
 }: {
   title?: string;
@@ -84,7 +84,7 @@ export function ErrorState({
           onClick={onRetry}
           className="mt-4 rounded-card border border-line-strong bg-surface px-4 py-2 text-sm text-body transition-colors hover:bg-hairline"
         >
-          Reintentar
+          Retry
         </button>
       )}
     </div>
