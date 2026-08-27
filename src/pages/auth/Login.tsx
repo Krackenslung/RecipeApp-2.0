@@ -47,7 +47,7 @@ export default function Login() {
       <div className="flex w-full max-w-[420px] flex-col gap-6 rounded-card border border-line-strong bg-surface px-8 py-10 shadow-card">
         {/* The card is the only chrome on these routes — no AppShell, so this is
             the one place the app names itself. */}
-        <img src={logo} alt="Recipes powered by Gemini" className="h-9 self-center" />
+        <img src={logo} alt="Recipes powered by Gemini" className="mx-auto mb-8 h-16 w-auto" />
         <h1 className="text-3xl font-semibold tracking-tight text-ink">Sign in</h1>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
