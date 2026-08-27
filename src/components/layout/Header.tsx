@@ -1,123 +1,95 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Bookmark, ChefHat, LogOut, Settings, Sparkles, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CircleUserRound, LogOut, Settings, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthProvider';
 import { useMyProfile } from '@/queries/useProfile';
-import { ButtonLink } from '@/components/ui/Button';
-import { cx } from '@/utils/cx';
+import { Button } from '@/components/ui/Button';
 
-function navClass({ isActive }: { isActive: boolean }) {
-  return cx(
-    'text-sm transition-colors',
-    isActive ? 'text-comal' : 'text-ceniza hover:text-comal',
-  );
-}
-
+/**
+ * Logo on the left, who you are on the right. The nav links live in the
+ * Sidebar now; only the profile menu stayed behind.
+ */
 export function Header() {
   const { user, signOut } = useAuth();
   const { data: profile } = useMyProfile();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
+  const name = profile?.display_name ?? profile?.username ?? 'Mi perfil';
+
   return (
-    <header className="border-b border-ceniza/20 bg-masa">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <ChefHat size={20} className="text-guajillo" aria-hidden />
-          <span className="font-display text-lg font-black tracking-tight text-comal">
-            Recetas
-          </span>
-        </Link>
+    <header className="col-span-full row-start-1 sticky top-0 z-50 flex items-center justify-between border-b border-line bg-surface px-6">
+      <Link to="/" className="flex items-center gap-2 no-underline">
+        {/* PLACEHOLDER — recipes_powered_by_gemini_logo.png todavía no está en
+            src/assets/. Cuando el PNG se copie del repo 1.0, esto se sustituye
+            por <img src={logo} alt="Recetas" className="h-9" />. */}
+        <span className="text-lg font-bold tracking-tight text-ink">Recetas</span>
+        <span className="text-xs text-muted">powered by Gemini</span>
+      </Link>
 
-        <nav className="hidden items-center gap-5 sm:flex">
-          <NavLink to="/" end className={navClass}>
-            Explorar
-          </NavLink>
-          {user && (
-            <>
-              <NavLink to="/me" className={navClass}>
-                Mis recetas
-              </NavLink>
-              <NavLink to="/me/collections" className={navClass}>
-                Colecciones
-              </NavLink>
-            </>
-          )}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-3">
-          {/* guajillo on exactly one thing per screen. This is it in the shell. */}
-          <ButtonLink to="/generate" variant="primary" size="sm">
-            <Sparkles size={15} aria-hidden />
-            Generar
-          </ButtonLink>
-
-          {user ? (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-expanded={menuOpen}
-                aria-haspopup="menu"
-                className="flex h-9 w-9 items-center justify-center overflow-hidden border border-ceniza/30 bg-cal text-ceniza transition-colors hover:border-comal hover:text-comal"
-              >
-                {profile?.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <User size={16} aria-hidden />
-                )}
-              </button>
-
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 z-40 mt-2 w-52 border border-ceniza/25 bg-cal py-1"
-                  onMouseLeave={() => setMenuOpen(false)}
-                >
-                  <MenuLink to="/me" icon={<User size={15} />} onClick={() => setMenuOpen(false)}>
-                    {profile?.display_name ?? profile?.username ?? 'Mi perfil'}
-                  </MenuLink>
-                  <MenuLink
-                    to="/me/saved"
-                    icon={<Bookmark size={15} />}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Guardadas
-                  </MenuLink>
-                  <MenuLink
-                    to="/settings"
-                    icon={<Settings size={15} />}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Ajustes
-                  </MenuLink>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={async () => {
-                      setMenuOpen(false);
-                      await signOut();
-                      navigate('/');
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ceniza transition-colors hover:bg-masa hover:text-comal"
-                  >
-                    <LogOut size={15} aria-hidden />
-                    Cerrar sesión
-                  </button>
-                </div>
+      {user ? (
+        <div className="flex items-center gap-2.5 text-body">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
+              className="flex items-center gap-2 rounded-card px-2 py-1.5 text-sm text-body transition-colors hover:bg-hairline hover:text-ink"
+            >
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt=""
+                  className="h-6 w-6 rounded-full object-cover"
+                />
+              ) : (
+                <CircleUserRound size={20} aria-hidden />
               )}
-            </div>
-          ) : (
-            <Link to="/login" className="text-sm text-ceniza transition-colors hover:text-comal">
-              Entrar
-            </Link>
-          )}
+              <span className="hidden sm:inline">{name}</span>
+            </button>
+
+            {menuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 z-40 mt-2 w-52 rounded-card border border-line-strong bg-surface py-1"
+                onMouseLeave={() => setMenuOpen(false)}
+              >
+                <MenuLink to="/me" icon={<User size={16} />} onClick={() => setMenuOpen(false)}>
+                  {name}
+                </MenuLink>
+                <MenuLink
+                  to="/settings"
+                  icon={<Settings size={16} />}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Ajustes
+                </MenuLink>
+              </div>
+            )}
+          </div>
+
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={async () => {
+              setMenuOpen(false);
+              await signOut();
+              navigate('/');
+            }}
+          >
+            <LogOut size={16} aria-hidden />
+            Cerrar sesión
+          </Button>
         </div>
-      </div>
+      ) : (
+        <Link
+          to="/login"
+          className="text-sm text-body no-underline transition-colors hover:text-ink"
+        >
+          Entrar
+        </Link>
+      )}
     </header>
   );
 }
@@ -138,7 +110,7 @@ function MenuLink({
       to={to}
       role="menuitem"
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-2 text-sm text-ceniza transition-colors hover:bg-masa hover:text-comal"
+      className="flex items-center gap-2 px-3 py-2 text-sm text-body no-underline transition-colors hover:bg-hairline hover:text-ink"
     >
       <span aria-hidden>{icon}</span>
       {children}
