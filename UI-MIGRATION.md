@@ -1,96 +1,104 @@
-# UI-MIGRATION.md — portar el look de Recipe App 1.0 a 2.0
+# UI-MIGRATION.md — porting the Recipe App 1.0 look to 2.0
 
-Documento de estilo para Recipe App 2.0. **Reemplaza la sección "Design direction" de `FRONTEND.md`.**
-Todo lo demás de `FRONTEND.md` (stack, rutas, `filterArgs`, TanStack Query, RLS) sigue vigente sin cambios.
+Style document for Recipe App 2.0. **Replaces the "Design direction" section of `FRONTEND.md`.**
+Everything else in `FRONTEND.md` (stack, routes, `filterArgs`, TanStack Query, RLS) stands unchanged.
 
-## 0. Contexto: por qué existe este archivo
+> **Amendment — card shadows.** §3 below says recipe cards carry no shadow, and the §6 checklist
+> greps for `shadow-*`. That call was reversed by the author after the migration landed: cards do
+> have a shadow, via a single `--shadow-card` token in `@theme`. The code is correct; those two
+> spots in this document are not. See "Design direction" in `FRONTEND.md`.
 
-`FRONTEND.md` definió una dirección visual que se aleja deliberadamente de la 1.0:
+## 0. Context: why this file exists
 
-> *"Cards have no shadows. A 1px `border-ceniza/20` and a flat `bg-cal`. Shadows on cards is the templated answer and it's what v1 looked like."*
+`FRONTEND.md` defined a visual direction that deliberately moved away from 1.0:
 
-Esa decisión queda revertida. El diseño de la 1.0 es el objetivo, no el antipatrón. Cualquier
-instrucción de `FRONTEND.md` que contradiga este archivo pierde.
+> *"Cards have no shadows. A 1px `border-ceniza/20` and a flat `bg-cal`. Shadows on cards is the
+> templated answer and it's what v1 looked like."*
 
-Lo que **no** cambia: el stack (Vite + React 19 + TS + Tailwind v4 CSS-first), el copy en
-español (`es-MX`), las rutas, los hooks de `src/queries/`, y `src/utils/filterArgs.ts`.
-Esto es un cambio de piel, no de arquitectura.
+That call is reversed. The 1.0 design is the target, not the antipattern. Any instruction in
+`FRONTEND.md` that contradicts this file loses.
+
+What does **not** change: the stack (Vite + React 19 + TS + Tailwind v4 CSS-first), the routes,
+the hooks in `src/queries/`, and `src/utils/filterArgs.ts`. This is a change of skin, not of
+architecture.
+
+> **Amendment — language.** This document originally specified Spanish (`es-MX`) copy. The whole
+> project is now in English: all UI copy, `lang="en"`, and `en-US` locales in `format.ts`. Catalog
+> names (cuisines, diets, allergens, ingredients) still come from the database in Spanish.
 
 ---
 
 ## 1. Tokens
 
-Toda la paleta sale del CSS real de la 1.0 (`index.css`, `Layout.css`, `RecipeCard.css`, `auth.css`).
-Va completa en `src/index.css` dentro de `@theme`, reemplazando los tokens masa/comal/guajillo.
+The whole palette comes from the real 1.0 CSS (`index.css`, `Layout.css`, `RecipeCard.css`,
+`auth.css`). It goes into `src/index.css` inside `@theme`, replacing the masa/comal/guajillo tokens.
 
 ```css
 /* src/index.css */
 @import "tailwindcss";
 
 @theme {
-  /* Texto */
-  --color-ink:          #1a1a1a;   /* títulos, nombres de receta */
-  --color-body:         #555555;   /* párrafo, labels, nav inactivo */
-  --color-muted:        #888888;   /* metadatos, footer de tarjeta */
+  /* Text */
+  --color-ink:          #1a1a1a;   /* headings, recipe names */
+  --color-body:         #555555;   /* body copy, labels, inactive nav */
+  --color-muted:        #888888;   /* metadata, card footer */
 
-  /* Superficies */
-  --color-surface:      #ffffff;   /* header, sidebar, tarjetas, rail de filtros */
-  --color-canvas:       #f8f9fa;   /* fondo del área de contenido */
+  /* Surfaces */
+  --color-surface:      #ffffff;   /* header, sidebar, cards, filter rail */
+  --color-canvas:       #f8f9fa;   /* content area background */
 
-  /* Bordes — tres pesos, no uno */
+  /* Borders — three weights, not one */
   --color-line:         #e9ecef;   /* chrome: header, sidebar, rails */
-  --color-line-strong:  #dddddd;   /* borde de tarjeta */
-  --color-hairline:     #f0f0f0;   /* separadores internos, fondo de chip */
+  --color-line-strong:  #dddddd;   /* card border */
+  --color-hairline:     #f0f0f0;   /* internal rules, chip background */
 
-  /* Acento */
+  /* Accent */
   --color-brand:        #e74c3c;
-  --color-brand-dark:   #c0392b;   /* hover del botón primario */
-  --color-brand-soft:   #fdecea;   /* fondo del nav activo */
-  --color-success:      #198754;   /* nivel de costo seleccionado */
+  --color-brand-dark:   #c0392b;   /* primary button hover */
+  --color-brand-soft:   #fdecea;   /* active nav background */
+  --color-success:      #198754;   /* selected cost level */
 
-  /* Radios */
+  /* Radii */
   --radius-card:        8px;
   --radius-chip:        4px;
 
-  /* Tipografía */
+  /* Typography */
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 ```
 
-**Reglas de uso**
+**Rules of use**
 
-- Cada token genera su utilidad automáticamente: `bg-surface`, `text-brand`, `border-line`,
-  `rounded-card`. No escribas valores arbitrarios (`bg-[#e74c3c]`) — si un color se usa dos
-  veces, va en `@theme`.
-- `--color-brand` es el único acento. Aparece en: nav activo, botón primario, títulos de sección,
-  viñetas de ingredientes, badges numerados de pasos. **La restricción de "un solo guajillo por
-  pantalla" de `FRONTEND.md` queda eliminada** — la 1.0 usa el rojo con generosidad y así se ve bien.
-- Nada de modo oscuro. La 1.0 declara `color-scheme: light` y no hay variantes `dark:`.
+- Every token generates its own utility: `bg-surface`, `text-brand`, `border-line`, `rounded-card`.
+  Don't write arbitrary values (`bg-[#e74c3c]`) — if a color is used twice, it goes in `@theme`.
+- `--color-brand` is the only accent. It shows up in: active nav, primary button, section headings,
+  ingredient bullets, numbered step badges. **The "one guajillo per screen" restriction from
+  `FRONTEND.md` is dropped** — 1.0 uses the red generously and it looks right that way.
+- No dark mode. 1.0 declares `color-scheme: light` and there are no `dark:` variants.
 
-**Decisión pendiente — tipografía.**
-La 1.0 no tenía fuente display; usaba el stack de sistema de Bootstrap. Aquí se propone Inter para
-todo el cuerpo y conservar JetBrains Mono **solo** para cantidades, tiempos y costos, porque las
-cifras tabulares alinean el ledger de ingredientes y eso no choca con el look de la 1.0.
-**Fraunces se elimina.** Si prefieres fidelidad total a la 1.0, quita también el mono y borra los
-`<link>` de Google Fonts en `index.html`.
+**Open decision — typography.**
+1.0 had no display face; it used Bootstrap's system stack. Inter is proposed here for all body copy,
+keeping JetBrains Mono **only** for quantities, times and costs, because tabular figures align the
+ingredient ledger and that doesn't clash with the 1.0 look. **Fraunces is dropped.** If you want
+total fidelity to 1.0, drop the mono too and delete the Google Fonts `<link>`s from `index.html`.
 
 ---
 
-## 2. Estructura del shell
+## 2. Shell structure
 
-El cambio más grande. La 2.0 hoy tiene nav horizontal + `<main class="mx-auto max-w-7xl">`.
-La 1.0 usa un grid de app de tres zonas y es lo que se ve en la captura de referencia.
+The biggest change. 2.0 currently has a horizontal nav plus `<main class="mx-auto max-w-7xl">`.
+1.0 uses a three-zone app grid, and that is what the reference screenshot shows.
 
-### 2.1 `AppShell.tsx` — grid de tres zonas
+### 2.1 `AppShell.tsx` — three-zone grid
 
-Medidas exactas de `Layout.css` de la 1.0:
+Exact measurements from 1.0's `Layout.css`:
 
-| Zona | Medida | Estilo |
+| Zone | Measurement | Style |
 |---|---|---|
-| Header | `60px`, ancho completo (`grid-column: 1 / -1`) | `bg-surface`, `border-b border-line`, `sticky top-0 z-50`, padding lateral `1.5rem` |
-| Sidebar | `240px`, columna 1 | `bg-surface`, `border-r border-line`, `sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto` |
-| Contenido | `1fr`, columna 2 | `bg-canvas`, padding `2rem`, `overflow-y-auto` |
+| Header | `60px`, full width (`grid-column: 1 / -1`) | `bg-surface`, `border-b border-line`, `sticky top-0 z-50`, side padding `1.5rem` |
+| Sidebar | `240px`, column 1 | `bg-surface`, `border-r border-line`, `sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto` |
+| Content | `1fr`, column 2 | `bg-canvas`, padding `2rem`, `overflow-y-auto` |
 
 ```tsx
 <div className="grid min-h-dvh grid-cols-[240px_1fr] grid-rows-[60px_1fr]">
@@ -104,55 +112,60 @@ Medidas exactas de `Layout.css` de la 1.0:
 </div>
 ```
 
-Se elimina el `max-w-7xl` centrado. El contenido llena la columna. Se conserva el
-skip-link `Saltar al contenido` que ya existe.
+> **Amendment — `min-h-dvh`.** As implemented, the container is `h-dvh`, not `min-h-dvh`. A sticky
+> header inside a 60px grid row has no travel to stick through, so it scrolled away; pinning the
+> grid to the viewport and letting `<main>` be the scroller is what actually holds the chrome.
 
-### 2.2 Sidebar de navegación
+The centered `max-w-7xl` goes away. Content fills the column. The existing `Skip to content`
+skip-link is kept.
 
-Reemplaza el nav horizontal del `Header` actual. Los ítems se mueven al sidebar; el menú
-desplegable de perfil se queda en el header.
+### 2.2 Navigation sidebar
 
-- Contenedor: `flex flex-col gap-1 p-3` (`padding: 1rem 0.75rem` en la 1.0).
+Replaces the current horizontal nav in `Header`. The items move to the sidebar; the profile
+dropdown stays in the header.
+
+- Container: `flex flex-col gap-1 p-3` (`padding: 1rem 0.75rem` in 1.0).
 - Link: `flex items-center gap-2 rounded-card px-4 py-2.5 text-body hover:no-underline`
-- Link activo: `bg-brand-soft text-brand` — este es el rosa pálido de la captura.
-- Ítems: Home (`/`), Generar receta (`/generate`), Historial (`/me`), Ajustes (`/settings`),
-  más los de 2.0 que no existían en la 1.0 (Colecciones, Guardadas). Copy en español.
+- Active link: `bg-brand-soft text-brand` — this is the pale rose from the screenshot.
+- Items: Home (`/`), Generate recipe (`/generate`), History (`/me`), Settings (`/settings`),
+  plus the 2.0 ones that didn't exist in 1.0 (Collections, Saved).
 
 ### 2.3 Header
 
-- Izquierda: logo `recipes_powered_by_gemini_logo.png` a `h-9` (36px). Está en el repo de la 1.0
-  en `frontend/src/assets/`; cópialo a `src/assets/`. Sustituye al lockup `ChefHat` + "Recetas".
-- Derecha: `flex items-center gap-2.5 text-body` — ícono de usuario, nombre, y botón
-  **Cerrar sesión** con contorno rojo (`variant="danger"`, `size="sm"`).
+- Left: the `recipes_powered_by_gemini_logo.png` logo at `h-9` (36px). It lives in the 1.0 repo
+  under `frontend/src/assets/`; copy it to `src/assets/`. It replaces the `ChefHat` + "Recipes"
+  lockup.
+- Right: `flex items-center gap-2.5 text-body` — user icon, name, and a **Sign out** button with a
+  red outline (`variant="danger"`, `size="sm"`).
 
-### 2.4 Vista de generación / feed — dos paneles
+### 2.4 Generation / feed view — two panes
 
-De `.generate-layout` en la 1.0. Aplica a `/generate` y a `/` (el feed también lleva filtros).
+From `.generate-layout` in 1.0. Applies to `/generate` and to `/` (the feed carries filters too).
 
 ```
 grid-cols-[1fr_500px]
 grid-rows-[1fr_auto]
-áreas:  "resultados  filtros"
-        "footer      filtros"
+areas:  "results  filters"
+        "footer   filters"
 ```
 
-- El `<main>` pierde su padding en estas rutas (`.app-content:has(.generate-layout){padding:0}`).
-  En React resuélvelo con una prop en la ruta o una clase condicional, no con `:has()`.
-- Panel de resultados: `overflow-y-auto p-12` (`3rem`), tarjetas apiladas en columna con `gap-5`.
-- Rail de filtros: `w-[500px] overflow-y-auto border-l border-line bg-surface px-3 py-4`,
-  altura completa, scroll independiente.
-- Debajo de `lg` los paneles se apilan; el rail pasa a un `<dialog>` (ya tienes `useDialog`).
+- `<main>` loses its padding on these routes (`.app-content:has(.generate-layout){padding:0}`).
+  In React, solve it with a prop on the route or a conditional class, not with `:has()`.
+- Results pane: `overflow-y-auto p-12` (`3rem`), cards stacked in a column with `gap-5`.
+- Filter rail: `w-[500px] overflow-y-auto border-l border-line bg-surface px-3 py-4`, full height,
+  independent scroll.
+- Below `lg` the panes stack and the rail becomes a `<dialog>` (you already have `useDialog`).
 
 ---
 
-## 3. Recetas de clases por componente
+## 3. Class recipes per component
 
-Estas cadenas viven **solo** dentro del componente que las define. Ninguna página escribe
-clases de botón a mano — es lo que evita que deriven entre archivos.
+These strings live **only** inside the component that defines them. No page writes button classes
+by hand — that is what stops them drifting between files.
 
 ### `ui/Button.tsx`
 
-Sustituye el mapa `VARIANTS` actual. Nota el cambio de `rounded-none` a `rounded-card`.
+Replaces the current `VARIANTS` map. Note the change from `rounded-none` to `rounded-card`.
 
 ```ts
 const BASE = 'inline-flex items-center justify-center gap-2 rounded-card font-medium ' +
@@ -163,7 +176,7 @@ const VARIANTS = {
   secondary: 'border border-line-strong bg-surface text-body hover:bg-hairline',
   ghost:     'text-body hover:text-ink',
   danger:    'border border-brand text-brand hover:bg-brand hover:text-white',
-  success:   'bg-success text-white',   // nivel de costo seleccionado
+  success:   'bg-success text-white',   // selected cost level
 };
 
 const SIZES = {
@@ -173,61 +186,62 @@ const SIZES = {
 };
 ```
 
-Botones de toggle de filtro (Costo, Dificultad): `size="sm"`, `secondary` sin seleccionar.
-Seleccionado → `success` para Costo, `primary` para Dificultad. Es el comportamiento exacto
-de la 1.0 y explica los dos colores distintos en la captura.
+Filter toggle buttons (Cost, Difficulty): `size="sm"`, `secondary` when unselected. Selected →
+`success` for Cost, `primary` for Difficulty. This is exactly 1.0's behaviour and explains the two
+different colors in the screenshot.
 
-### `ui/Chip.tsx` — tags de receta y de filtro
+### `ui/Chip.tsx` — recipe and filter tags
 
-- Tag de receta: `rounded-chip bg-hairline px-2 py-0.5 text-xs text-body whitespace-nowrap`
-- Tag de filtro seleccionado (removible): mismo cuerpo + ícono `X` de lucide a `12px`,
-  `cursor-pointer`, con `aria-label="Quitar {tag}"`.
+- Recipe tag: `rounded-chip bg-hairline px-2 py-0.5 text-xs text-body whitespace-nowrap`
+- Selected filter tag (removable): same body plus a lucide `X` icon at `12px`, `cursor-pointer`,
+  with `aria-label="Remove {tag}"`.
 
 ### `ui/Field.tsx` — inputs, selects, textarea
 
 - Label: `mb-1.5 block font-semibold text-body`
 - Control: `w-full rounded-card border border-line-strong bg-surface px-3 py-2 text-body
   placeholder:text-muted focus:border-line-strong focus:outline-none`
-  La 1.0 anula explícitamente el glow de foco de Bootstrap (`box-shadow: none`).
-- Grupo input + botón (autocompletar de ingredientes): input con esquinas derechas rectas,
-  botón `+` pegado con esquinas izquierdas rectas. Bordes contiguos, sin doble línea.
-- Dropdown de sugerencias: `absolute z-30 w-full max-h-40 overflow-y-auto rounded-card
-  border border-line-strong bg-surface`, ítems `px-3 py-2 text-body hover:bg-hairline`.
+  1.0 explicitly kills Bootstrap's focus glow (`box-shadow: none`).
+- Input + button group (ingredient autocomplete): input with square right corners, a `+` button
+  welded on with square left corners. Contiguous borders, no doubled line.
+- Suggestions dropdown: `absolute z-30 w-full max-h-40 overflow-y-auto rounded-card
+  border border-line-strong bg-surface`, items `px-3 py-2 text-body hover:bg-hairline`.
 
 ### `recipe/RecipeCard.tsx`
 
-De `RecipeCard.css`. **Sin sombra** — la 1.0 tampoco la tenía; se distingue por borde.
+From `RecipeCard.css`. **No shadow** — 1.0 didn't have one either; it's told apart by its border.
+*(Superseded — see the amendment at the top of this file.)*
 
-- Contenedor: `flex flex-col overflow-hidden rounded-card border border-line-strong
+- Container: `flex flex-col overflow-hidden rounded-card border border-line-strong
   bg-surface cursor-pointer`
-- Imagen: `h-[180px] w-full object-cover` (variante detalle: `h-[260px]`).
-  Fallback `no_recipe_image.png`, también en los assets de la 1.0.
-- Cuerpo: `flex flex-1 flex-col gap-2 p-4`
-- Nombre: `m-0 leading-tight text-ink line-clamp-2`
+- Image: `h-[180px] w-full object-cover` (detail variant: `h-[260px]`).
+  Fallback `no_recipe_image.png`, also in the 1.0 assets.
+- Body: `flex flex-1 flex-col gap-2 p-4`
+- Name: `m-0 leading-tight text-ink line-clamp-2`
 - Footer: `flex justify-between border-t border-hairline px-4 py-2.5 text-muted`
 
-### Detalle de receta
+### Recipe detail
 
-- Título de sección: `uppercase text-brand mb-1.5` (INGREDIENTES, PREPARACIÓN).
-- Ingredientes: `list-none p-0 m-0 flex flex-col gap-1`, con `::before` de contenido `•`
-  en `text-brand` y `mr-2`. Se puede conservar el ledger de dos columnas con cantidades en
-  mono — es compatible con el estilo de la 1.0 y no lo contradice.
-- Pasos: contador CSS. Badge circular `h-6 w-6 rounded-full bg-brand text-white`,
-  `flex items-center justify-center shrink-0`, ítem `flex gap-3 leading-relaxed`.
+- Section heading: `uppercase text-brand mb-1.5` (INGREDIENTS, METHOD).
+- Ingredients: `list-none p-0 m-0 flex flex-col gap-1`, with a `::before` of content `•` in
+  `text-brand` and `mr-2`. The two-column ledger with quantities in mono can be kept — it is
+  compatible with the 1.0 style and doesn't contradict it.
+- Steps: CSS counter. Circular badge `h-6 w-6 rounded-full bg-brand text-white`,
+  `flex items-center justify-center shrink-0`, item `flex gap-3 leading-relaxed`.
 
 ### Auth (`Login`, `Signup`)
 
-- Wrapper: `flex min-h-dvh w-full items-center justify-center` sobre `bg-canvas`.
-  Sin shell de app en estas rutas.
-- Tarjeta: `w-full max-w-[420px] rounded-card border border-line-strong bg-surface px-8 py-10`
-- Enlaces: `text-brand no-underline hover:underline`.
+- Wrapper: `flex min-h-dvh w-full items-center justify-center` over `bg-canvas`.
+  No app shell on these routes.
+- Card: `w-full max-w-[420px] rounded-card border border-line-strong bg-surface px-8 py-10`
+- Links: `text-brand no-underline hover:underline`.
 
 ---
 
-## 4. Íconos
+## 4. Icons
 
-La 1.0 usa Font Awesome vía CDN. La 2.0 ya trae `lucide-react` — **no** añadas Font Awesome.
-Equivalencias:
+1.0 uses Font Awesome via CDN. 2.0 already ships `lucide-react` — do **not** add Font Awesome.
+Equivalents:
 
 | Font Awesome (v1) | Lucide (v2) |
 |---|---|
@@ -240,42 +254,48 @@ Equivalencias:
 | `fa-times` | `X` |
 | `fa-arrow-right` | `ArrowRight` |
 
-Tamaño por defecto `16`; `20` en el sidebar. Siempre `aria-hidden` cuando hay texto al lado.
+Default size `16`; `20` in the sidebar. Always `aria-hidden` when there is text alongside.
 
 ---
 
-## 5. Archivos afectados
+## 5. Affected files
 
-**Editar**
+**Edit**
 
 ```
-src/index.css                        tokens @theme, capa base
-index.html                           quitar Fraunces; theme-color → #ffffff
-src/components/layout/AppShell.tsx   grid de tres zonas
-src/components/layout/Header.tsx     logo + usuario; el nav se va al sidebar
-src/components/layout/FilterSidebar.tsx  rail de 500px, botones de toggle
-src/components/ui/Button.tsx         variantes + rounded-card
+src/index.css                        @theme tokens, base layer
+index.html                           drop Fraunces; theme-color → #ffffff
+src/components/layout/AppShell.tsx   three-zone grid
+src/components/layout/Header.tsx     logo + user; the nav goes to the sidebar
+src/components/layout/FilterSidebar.tsx  500px rail, toggle buttons
+src/components/ui/Button.tsx         variants + rounded-card
 src/components/ui/Chip.tsx
 src/components/ui/Field.tsx
 src/components/recipe/RecipeCard.tsx
 src/components/recipe/StepList.tsx
 src/components/recipe/IngredientLedger.tsx
-src/pages/app/Feed.tsx               layout de dos paneles
-src/pages/app/Generate.tsx           layout de dos paneles
+src/pages/app/Feed.tsx               two-pane layout
+src/pages/app/Generate.tsx           two-pane layout
 src/pages/auth/Login.tsx
 src/pages/auth/Signup.tsx
-FRONTEND.md                          reescribir "Design direction" apuntando aquí
+FRONTEND.md                          rewrite "Design direction" pointing here
 ```
 
-**Crear**
+**Create**
 
 ```
 src/components/layout/Sidebar.tsx
-src/assets/recipes_powered_by_gemini_logo.png   ← copiar del repo 1.0
-src/assets/no_recipe_image.png                  ← copiar del repo 1.0
+src/assets/recipes_powered_by_gemini_logo.png   ← copy from the 1.0 repo
+src/assets/no_recipe_image.png                  ← copy from the 1.0 repo
 ```
 
-**No tocar**
+> **Amendment — files actually touched.** Every page and component that used the old tokens had to
+> be migrated, not just the list above: with masa/comal/guajillo out of `@theme`, Tailwind stops
+> generating those classes and the screens lose their styling. `TwoPaneLayout.tsx` was also added
+> (Feed and Generate need the same grid, rail and dialog fallback), and `Footer.tsx` and `CostField`
+> were removed.
+
+**Do not touch**
 
 ```
 src/queries/**          src/utils/filterArgs.ts     src/lib/supabase.ts
@@ -283,19 +303,22 @@ src/context/AuthProvider.tsx   src/router/**        src/types/database.ts
 schema.md               recipe_search.sql           CLAUDE.2.0.md
 ```
 
+> **Amendment.** `src/queries/**` and `src/utils/filterArgs.ts` were later opened up, for their
+> user-facing strings only, when the project moved to English.
+
 ---
 
-## 6. Verificación
+## 6. Verification
 
-- [ ] `npm run build` y `npm run typecheck` pasan.
-- [ ] `npm test` sigue verde — `filterArgs.test.ts` no debe haberse tocado.
-- [ ] `grep -rn "masa\|comal\|guajillo\|tomatillo\|ceniza\|cal\b" src/` no devuelve nada.
-- [ ] `grep -rn "\[#" src/` no devuelve colores arbitrarios (`h-[180px]` sí es válido).
-- [ ] `grep -rn "Fraunces\|font-display" src/ index.html` no devuelve nada.
-- [ ] Header a 60px y sidebar a 240px, ambos sticky, con scroll independiente en contenido.
-- [ ] El link activo del sidebar sale rosa (`#fdecea`) con texto rojo.
-- [ ] `/generate` muestra resultados a la izquierda y el rail de filtros de 500px a la derecha.
-- [ ] Ninguna tarjeta tiene `shadow-*`.
-- [ ] Sin regresiones de accesibilidad: skip-link vivo, `aria-label` en los botones de icono,
-      foco visible en todos los controles.
-- [ ] Todo el copy sigue en español.
+- [ ] `npm run build` and `npm run typecheck` pass.
+- [ ] `npm test` stays green — `filterArgs.test.ts` must not have been touched.
+- [ ] `grep -rn "masa\|comal\|guajillo\|tomatillo\|ceniza\|cal\b" src/` returns nothing.
+- [ ] `grep -rn "\[#" src/` returns no arbitrary colors (`h-[180px]` is valid).
+- [ ] `grep -rn "Fraunces\|font-display" src/ index.html` returns nothing.
+- [ ] Header at 60px and sidebar at 240px, both pinned, with independent scrolling in the content.
+- [ ] The active sidebar link is rose (`#fdecea`) with red text.
+- [ ] `/generate` shows results on the left and the 500px filter rail on the right.
+- [ ] ~~No card has `shadow-*`.~~ Superseded — cards carry `shadow-card`. See the amendment above.
+- [ ] No accessibility regressions: skip-link alive, `aria-label` on icon buttons, visible focus on
+      every control.
+- [ ] ~~All copy stays in Spanish.~~ Superseded — the project is in English.

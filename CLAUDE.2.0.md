@@ -8,7 +8,7 @@ Guidance for Claude Code when working on **Recipe App 2.0**.
 
 **No code exists yet.** This repository holds design documents only — no `package.json`, no migrations, no `src/`. Everything below is the target state: the shape new code must take.
 
-Source documents: `Recipe app 2 0 …2.0.md` (architecture) and `recipe_app_diccionario 2.0.md` (domain model). The dictionary is authoritative on *modelling* but is written in T-SQL for SQL Server — the schema below is the Postgres port and supersedes it on every question of type, index and trigger syntax.
+Source documents: `Recipe app 2 0 …2.0.md` (architecture) and `recipe_app_data_dictionary 2.0.md` (domain model). The dictionary is authoritative on *modelling* but is written in T-SQL for SQL Server — the schema below is the Postgres port and supersedes it on every question of type, index and trigger syntax.
 
 ## Project overview
 
