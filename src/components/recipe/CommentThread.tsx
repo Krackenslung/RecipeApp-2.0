@@ -15,8 +15,8 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
   const [body, setBody] = useState('');
 
   return (
-    <section className="flex flex-col gap-4 border-t border-ceniza/20 pt-8">
-      <h2 className="font-display text-xl font-black tracking-tight text-comal">Comentarios</h2>
+    <section className="flex flex-col gap-4 border-t border-line pt-8">
+      <h2 className="text-xl font-semibold text-ink">Comentarios</h2>
 
       {user ? (
         <form
@@ -44,7 +44,7 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="¿Cómo te quedó? ¿Cambiaste algo?"
-            className="min-h-20 w-full resize-y border border-ceniza/35 bg-cal px-3 py-2 text-sm text-comal placeholder:text-ceniza/70 focus:border-comal focus:outline-none"
+            className="min-h-20 w-full resize-y rounded-card border border-line-strong bg-surface px-3 py-2 text-sm text-body placeholder:text-muted focus:border-line-strong focus:outline-none"
           />
           <div className="flex justify-end">
             <Button type="submit" size="sm" loading={post.isPending} disabled={!body.trim()}>
@@ -53,8 +53,8 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
           </div>
         </form>
       ) : (
-        <p className="text-sm text-ceniza">
-          <Link to="/login" className="text-guajillo underline">
+        <p className="text-sm text-body">
+          <Link to="/login" className="text-brand underline">
             Entra
           </Link>{' '}
           para comentar.
@@ -62,10 +62,10 @@ export function CommentThread({ recipeId }: { recipeId: string }) {
       )}
 
       {isLoading && <Spinner />}
-      {isError && <p className="text-sm text-ceniza">No pudimos cargar los comentarios.</p>}
+      {isError && <p className="text-sm text-body">No pudimos cargar los comentarios.</p>}
 
       {comments && comments.length === 0 && (
-        <p className="text-sm text-ceniza">Nadie ha comentado todavía.</p>
+        <p className="text-sm text-body">Nadie ha comentado todavía.</p>
       )}
 
       <ul className="flex flex-col gap-5">
@@ -97,35 +97,35 @@ function Comment({
   const deleted = node.deleted_at != null;
 
   return (
-    <li className={depth > 0 ? 'ml-6 border-l border-ceniza/20 pl-4' : ''}>
+    <li className={depth > 0 ? 'ml-6 border-l border-hairline pl-4' : ''}>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-baseline gap-2">
           {node.author ? (
             <Link
               to={`/u/${node.author.username}`}
-              className="text-sm font-medium text-comal transition-colors hover:text-guajillo"
+              className="text-sm font-medium text-ink transition-colors hover:text-brand"
             >
               {node.author.display_name ?? node.author.username}
             </Link>
           ) : (
-            <span className="text-sm text-ceniza">Alguien</span>
+            <span className="text-sm text-body">Alguien</span>
           )}
-          <span className="font-mono text-xs text-ceniza">{formatDate(node.created_at)}</span>
+          <span className="font-mono text-xs text-body">{formatDate(node.created_at)}</span>
         </div>
 
         {deleted ? (
-          <p className="text-sm italic text-ceniza">Comentario eliminado.</p>
+          <p className="text-sm italic text-body">Comentario eliminado.</p>
         ) : (
-          <p className="text-sm leading-relaxed text-comal">{node.body}</p>
+          <p className="text-sm leading-relaxed text-ink">{node.body}</p>
         )}
 
         {!deleted && (
-          <div className="flex items-center gap-3 text-xs text-ceniza">
+          <div className="flex items-center gap-3 text-xs text-body">
             {user && depth === 0 && (
               <button
                 type="button"
                 onClick={() => setReplying((v) => !v)}
-                className="transition-colors hover:text-comal"
+                className="transition-colors hover:text-ink"
               >
                 Responder
               </button>
@@ -134,7 +134,7 @@ function Comment({
               <button
                 type="button"
                 onClick={() => remove.mutate(node.comment_id)}
-                className="transition-colors hover:text-guajillo"
+                className="transition-colors hover:text-brand"
               >
                 Eliminar
               </button>
@@ -166,7 +166,7 @@ function Comment({
               id={`reply-${node.comment_id}`}
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              className="min-h-16 w-full resize-y border border-ceniza/35 bg-cal px-3 py-2 text-sm text-comal focus:border-comal focus:outline-none"
+              className="min-h-16 w-full resize-y rounded-card border border-line-strong bg-surface px-3 py-2 text-sm text-body focus:border-line-strong focus:outline-none"
             />
             <div className="flex justify-end gap-2">
               <Button type="button" size="sm" variant="ghost" onClick={() => setReplying(false)}>

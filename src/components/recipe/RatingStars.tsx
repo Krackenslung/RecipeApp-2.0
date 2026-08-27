@@ -23,7 +23,7 @@ export function RatingStars({ value, onRate, onClear, readOnly = false, size = 2
             key={n}
             size={size}
             aria-hidden
-            className={n <= shown ? 'text-guajillo' : 'text-ceniza/30'}
+            className={n <= shown ? 'text-brand' : 'text-muted'}
             fill={n <= shown ? 'currentColor' : 'none'}
           />
         ))}
@@ -49,7 +49,7 @@ export function RatingStars({ value, onRate, onClear, readOnly = false, size = 2
             <Star
               size={size}
               aria-hidden
-              className={cx(n <= shown ? 'text-guajillo' : 'text-ceniza/30')}
+              className={cx(n <= shown ? 'text-brand' : 'text-muted')}
               fill={n <= shown ? 'currentColor' : 'none'}
             />
           </button>
@@ -60,7 +60,7 @@ export function RatingStars({ value, onRate, onClear, readOnly = false, size = 2
         <button
           type="button"
           onClick={onClear}
-          className="text-xs text-ceniza transition-colors hover:text-comal"
+          className="text-xs text-body transition-colors hover:text-ink"
         >
           Quitar
         </button>

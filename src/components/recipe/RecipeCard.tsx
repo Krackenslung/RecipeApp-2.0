@@ -12,8 +12,8 @@ type Props = {
 };
 
 /**
- * No shadow. A 1px border and a flat bg-cal — a drop shadow here is the
- * templated answer and it is what v1 looked like.
+ * From RecipeCard.css. No shadow — v1 did not have one either; the card is
+ * told apart by its border and the white against the canvas.
  */
 export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
   const cuisines = splitAgg(recipe.cuisines);
@@ -21,39 +21,39 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
   const isDraft = recipe.status !== 'published' || recipe.visibility !== 'public';
 
   return (
-    <article className="group relative flex flex-col border border-ceniza/20 bg-cal">
-      <Link to={`/r/${recipe.slug}`} className="flex flex-1 flex-col">
-        <div className="aspect-[4/3] w-full overflow-hidden bg-masa">
+    <article className="group relative flex cursor-pointer flex-col overflow-hidden rounded-card border border-line-strong bg-surface">
+      <Link to={`/r/${recipe.slug}`} className="flex flex-1 flex-col no-underline">
+        <div className="h-[180px] w-full overflow-hidden bg-hairline">
           {recipe.cover_image_url ? (
             <img
               src={recipe.cover_image_url}
               alt=""
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="h-[180px] w-full object-cover"
             />
           ) : (
+            // PLACEHOLDER — no_recipe_image.png todavía no está en src/assets/.
+            // Mientras tanto, la inicial sobre el gris de la 1.0.
             <div className="flex h-full w-full items-center justify-center">
-              <span className="font-display text-4xl font-black text-ceniza/25">
-                {recipe.title.slice(0, 1)}
-              </span>
+              <span className="text-4xl font-bold text-muted">{recipe.title.slice(0, 1)}</span>
             </div>
           )}
         </div>
 
         <div className="flex flex-1 flex-col gap-2 p-4">
           <div className="flex items-start gap-2">
-            <h3 className="flex-1 font-display text-lg font-black leading-tight tracking-tight text-comal">
+            <h3 className="m-0 line-clamp-2 flex-1 text-base font-semibold leading-tight text-ink">
               {recipe.title}
             </h3>
             {isDraft && (
-              <span className="mt-0.5 border border-ceniza/40 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ceniza">
+              <span className="mt-0.5 shrink-0 rounded-chip bg-hairline px-2 py-0.5 text-xs text-muted">
                 borrador
               </span>
             )}
           </div>
 
           {recipe.summary && (
-            <p className="line-clamp-2 text-sm text-ceniza">{recipe.summary}</p>
+            <p className="line-clamp-2 text-sm text-body">{recipe.summary}</p>
           )}
 
           {(cuisines.length > 0 || diets.length > 0) && (
@@ -68,36 +68,36 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
               ))}
             </div>
           )}
-
-          <dl className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 font-mono text-xs text-ceniza">
-            <div className="flex items-center gap-1">
-              <Clock size={12} aria-hidden />
-              <dt className="sr-only">Tiempo</dt>
-              <dd>{formatMinutes(recipe.total_minutes)}</dd>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users size={12} aria-hidden />
-              <dt className="sr-only">Porciones</dt>
-              <dd>{recipe.servings}</dd>
-            </div>
-            {recipe.est_cost != null && (
-              <div className="flex items-center gap-1">
-                <dt className="sr-only">Costo</dt>
-                <dd>{formatCost(recipe.est_cost, recipe.currency)}</dd>
-              </div>
-            )}
-            {recipe.rating_count > 0 && (
-              <div className="flex items-center gap-1">
-                <Star size={12} aria-hidden className="text-guajillo" />
-                <dt className="sr-only">Calificación</dt>
-                <dd>
-                  {formatRating(recipe.rating_avg)}
-                  <span className="text-ceniza/70"> ({recipe.rating_count})</span>
-                </dd>
-              </div>
-            )}
-          </dl>
         </div>
+
+        <dl className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-hairline px-4 py-2.5 font-mono text-xs text-muted">
+          <div className="flex items-center gap-1">
+            <Clock size={12} aria-hidden />
+            <dt className="sr-only">Tiempo</dt>
+            <dd>{formatMinutes(recipe.total_minutes)}</dd>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users size={12} aria-hidden />
+            <dt className="sr-only">Porciones</dt>
+            <dd>{recipe.servings}</dd>
+          </div>
+          {recipe.est_cost != null && (
+            <div className="flex items-center gap-1">
+              <dt className="sr-only">Costo</dt>
+              <dd>{formatCost(recipe.est_cost, recipe.currency)}</dd>
+            </div>
+          )}
+          {recipe.rating_count > 0 && (
+            <div className="flex items-center gap-1">
+              <Star size={12} aria-hidden className="text-brand" />
+              <dt className="sr-only">Calificación</dt>
+              <dd>
+                {formatRating(recipe.rating_avg)}
+                <span> ({recipe.rating_count})</span>
+              </dd>
+            </div>
+          )}
+        </dl>
       </Link>
 
       {onToggleSave && (
@@ -107,10 +107,10 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
           aria-pressed={saved}
           aria-label={saved ? 'Quitar de guardadas' : 'Guardar receta'}
           className={cx(
-            'absolute right-2 top-2 flex h-8 w-8 items-center justify-center border bg-cal transition-colors',
+            'absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-card border bg-surface transition-colors',
             saved
-              ? 'border-guajillo text-guajillo'
-              : 'border-ceniza/30 text-ceniza hover:border-comal hover:text-comal',
+              ? 'border-brand text-brand'
+              : 'border-line-strong text-muted hover:border-brand hover:text-brand',
           )}
         >
           <Bookmark size={15} fill={saved ? 'currentColor' : 'none'} aria-hidden />

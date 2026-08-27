@@ -47,7 +47,7 @@ export function IngredientLedger({ ingredients, baseServings, servings }: Props)
   }, [ingredients]);
 
   if (!ingredients.length) {
-    return <p className="text-sm text-ceniza">Esta receta todavía no tiene ingredientes.</p>;
+    return <p className="text-sm text-body">Esta receta todavía no tiene ingredientes.</p>;
   }
 
   return (
@@ -55,12 +55,10 @@ export function IngredientLedger({ ingredients, baseServings, servings }: Props)
       {groups.map(([label, items]) => (
         <section key={label || 'default'} className="flex flex-col gap-1">
           {label && (
-            <h3 className="mb-1 font-display text-sm font-black uppercase tracking-wide text-ceniza">
-              {label}
-            </h3>
+            <h3 className="mb-1.5 text-sm font-semibold uppercase text-brand">{label}</h3>
           )}
 
-          <ul className="flex flex-col">
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
             {items.map((ing) => {
               const qty = ing.quantity != null ? ing.quantity * factor : null;
               const unit = ing.unit_id != null ? units.get(ing.unit_id) : null;
@@ -68,23 +66,22 @@ export function IngredientLedger({ ingredients, baseServings, servings }: Props)
               return (
                 <li
                   key={ing.recipe_ingredient_id}
-                  className="grid grid-cols-[5.5rem_1fr] items-baseline gap-3 py-1.5"
+                  className="grid grid-cols-[5.5rem_1fr] items-baseline gap-3"
                 >
-                  <span className="text-right font-mono text-sm text-comal">
+                  <span className="text-right font-mono text-sm text-ink">
                     <TickingNumber value={qty} />
-                    {unit && <span className="ml-1 text-ceniza">{unit}</span>}
+                    {unit && <span className="ml-1 text-muted">{unit}</span>}
                   </span>
 
-                  {/* The hairline is the rule that leads the eye to the name. */}
-                  <span className="relative flex items-baseline gap-2 before:absolute before:-left-3 before:top-1/2 before:h-px before:w-2 before:bg-ceniza/30">
-                    <span className="text-sm text-comal">
+                  {/* v1's red bullet, kept as a pseudo-element so it stays out
+                      of the accessibility tree. */}
+                  <span className="flex items-baseline before:mr-2 before:text-brand before:content-['•']">
+                    <span className="text-sm text-body">
                       {(ing.ingredient_id != null && nameById.get(ing.ingredient_id)) ||
                         ing.raw_text}
-                      {ing.preparation && (
-                        <span className="text-ceniza">, {ing.preparation}</span>
-                      )}
+                      {ing.preparation && <span className="text-muted">, {ing.preparation}</span>}
                       {ing.is_optional && (
-                        <span className="ml-1.5 text-xs text-ceniza">(opcional)</span>
+                        <span className="ml-1.5 text-xs text-muted">(opcional)</span>
                       )}
                     </span>
                   </span>

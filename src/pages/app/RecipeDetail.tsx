@@ -55,7 +55,7 @@ export default function RecipeDetail() {
         title="Esta receta no existe"
         message="O es privada y no es tuya."
         action={
-          <Link to="/" className="text-sm text-guajillo underline">
+          <Link to="/" className="text-sm text-brand underline">
             Volver a explorar
           </Link>
         }
@@ -75,8 +75,8 @@ export default function RecipeDetail() {
   return (
     <article className="flex flex-col gap-10">
       {isDraft && isAuthor && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border border-guajillo/40 px-4 py-3">
-          <p className="text-sm text-comal">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-brand bg-surface px-4 py-3">
+          <p className="text-sm text-ink">
             Esta receta es un borrador privado. El modelo propone, tú publicas.
           </p>
           <Button
@@ -97,13 +97,13 @@ export default function RecipeDetail() {
 
       <header className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div className="flex flex-col gap-4">
-          <h1 className="font-display text-4xl font-black leading-[1.05] tracking-tight text-comal">
+          <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight text-ink">
             {recipe.title}
           </h1>
 
-          {recipe.summary && <p className="max-w-2xl text-base text-ceniza">{recipe.summary}</p>}
+          {recipe.summary && <p className="max-w-2xl text-base text-body">{recipe.summary}</p>}
 
-          <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-sm text-ceniza">
+          <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-sm text-body">
             <div className="flex items-center gap-1.5">
               <Clock size={14} aria-hidden />
               <dt className="sr-only">Tiempo total</dt>
@@ -129,7 +129,7 @@ export default function RecipeDetail() {
                 <dt className="sr-only">Calificación</dt>
                 <dd>
                   {formatRating(recipe.rating_avg)} ★{' '}
-                  <span className="text-ceniza/70">({recipe.rating_count})</span>
+                  <span className="text-muted">({recipe.rating_count})</span>
                 </dd>
               </div>
             )}
@@ -170,7 +170,7 @@ export default function RecipeDetail() {
             {isAuthor && (
               <Link
                 to={`/r/${recipe.slug}/edit`}
-                className="text-sm text-ceniza underline transition-colors hover:text-comal"
+                className="text-sm text-body underline transition-colors hover:text-ink"
               >
                 Editar
               </Link>
@@ -183,24 +183,24 @@ export default function RecipeDetail() {
             <img
               src={recipe.cover_image_url}
               alt={recipe.title}
-              className="aspect-[4/3] w-full border border-ceniza/20 object-cover"
+              className="h-[260px] w-full rounded-card border border-line-strong object-cover"
             />
           ) : (
-            <div className="flex aspect-[4/3] w-full items-center justify-center border border-ceniza/20 bg-cal">
-              <span className="font-display text-6xl font-black text-ceniza/20">
+            <div className="flex h-[260px] w-full items-center justify-center rounded-card border border-line-strong bg-surface">
+              <span className="text-6xl font-semibold text-muted">
                 {recipe.title.slice(0, 1)}
               </span>
             </div>
           )}
 
           {nutrition && (
-            <dl className="grid grid-cols-4 border border-ceniza/20 bg-cal text-center">
+            <dl className="grid grid-cols-4 overflow-hidden rounded-card border border-line-strong bg-surface text-center">
               <NutritionCell label="kcal" value={nutrition.calories} />
               <NutritionCell label="prot" value={nutrition.protein_g} suffix="g" />
               <NutritionCell label="carb" value={nutrition.carbs_g} suffix="g" />
               <NutritionCell label="gras" value={nutrition.fat_g} suffix="g" />
               {nutrition.is_estimated && (
-                <p className="col-span-4 border-t border-ceniza/15 px-2 py-1.5 text-[10px] text-ceniza">
+                <p className="col-span-4 border-t border-hairline px-2 py-1.5 text-[10px] text-muted">
                   Estimado por porción, calculado desde los ingredientes.
                 </p>
               )}
@@ -212,9 +212,8 @@ export default function RecipeDetail() {
       <div className="grid gap-10 lg:grid-cols-[20rem_1fr]">
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-3">
-            <h2 className="font-display text-xl font-black tracking-tight text-comal">
-              Ingredientes
-            </h2>
+            {/* v1's section headings: uppercase, red, quiet. */}
+            <h2 className="mb-1.5 text-sm font-semibold uppercase text-brand">Ingredientes</h2>
             <ServingsStepper value={servings} base={recipe.servings} onChange={setServings} />
           </div>
 
@@ -226,13 +225,13 @@ export default function RecipeDetail() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="font-display text-xl font-black tracking-tight text-comal">Pasos</h2>
+          <h2 className="mb-1.5 text-sm font-semibold uppercase text-brand">Preparación</h2>
           <StepList steps={recipe.recipe_steps} />
         </section>
       </div>
 
-      <section className="flex flex-col gap-3 border-t border-ceniza/20 pt-8">
-        <h2 className="font-display text-xl font-black tracking-tight text-comal">
+      <section className="flex flex-col gap-3 border-t border-line pt-8">
+        <h2 className="text-xl font-semibold text-ink">
           ¿Qué tal quedó?
         </h2>
         {user ? (
@@ -247,8 +246,8 @@ export default function RecipeDetail() {
             onClear={() => unrate.mutate()}
           />
         ) : (
-          <p className="text-sm text-ceniza">
-            <Link to="/login" className="text-guajillo underline">
+          <p className="text-sm text-body">
+            <Link to="/login" className="text-brand underline">
               Entra
             </Link>{' '}
             para calificar y guardar recetas.
@@ -286,18 +285,18 @@ export default function RecipeDetail() {
                       },
                     )
                   }
-                  className="w-full border border-ceniza/25 px-3 py-2 text-left text-sm transition-colors hover:border-comal"
+                  className="w-full rounded-card border border-line-strong px-3 py-2 text-left text-sm text-body transition-colors hover:bg-hairline"
                 >
                   {c.name}
-                  {!c.is_public && <span className="ml-2 text-xs text-ceniza">privada</span>}
+                  {!c.is_public && <span className="ml-2 text-xs text-body">privada</span>}
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-ceniza">
+          <p className="text-sm text-body">
             Todavía no tienes colecciones.{' '}
-            <Link to="/me/collections" className="text-guajillo underline">
+            <Link to="/me/collections" className="text-brand underline">
               Crea una
             </Link>
             .
@@ -318,12 +317,12 @@ function NutritionCell({
   suffix?: string;
 }) {
   return (
-    <div className="border-r border-ceniza/15 px-2 py-3 last:border-r-0">
-      <dd className="font-mono text-base text-comal">
+    <div className="border-r border-hairline px-2 py-3 last:border-r-0">
+      <dd className="font-mono text-base text-ink">
         {value == null ? '—' : Math.round(value)}
         {value != null && suffix}
       </dd>
-      <dt className="text-[10px] uppercase tracking-wide text-ceniza">{label}</dt>
+      <dt className="text-[10px] uppercase tracking-wide text-muted">{label}</dt>
     </div>
   );
 }

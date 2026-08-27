@@ -4,25 +4,26 @@ import { formatMinutes } from '@/utils/format';
 
 export function StepList({ steps }: { steps: RecipeStep[] }) {
   if (!steps.length) {
-    return <p className="text-sm text-ceniza">Esta receta todavía no tiene pasos.</p>;
+    return <p className="text-sm text-body">Esta receta todavía no tiene pasos.</p>;
   }
 
   return (
-    <ol className="flex flex-col">
+    <ol className="m-0 flex list-none flex-col gap-4 p-0">
       {steps.map((step) => (
-        <li
-          key={step.step_id}
-          className="grid grid-cols-[2.5rem_1fr] gap-3 border-b border-ceniza/15 py-4 last:border-b-0"
-        >
-          <span className="font-mono text-lg text-ceniza/60">
-            {String(step.step_number).padStart(2, '0')}
+        <li key={step.step_id} className="flex gap-3 leading-relaxed">
+          {/* The numbered badge is v1's counter, drawn as a circle. */}
+          <span
+            aria-hidden
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white"
+          >
+            {step.step_number}
           </span>
 
-          <div className="flex flex-col gap-2">
-            <p className="text-sm leading-relaxed text-comal">{step.instruction}</p>
+          <div className="flex flex-1 flex-col gap-2">
+            <p className="m-0 text-sm leading-relaxed text-body">{step.instruction}</p>
 
             {step.duration_minutes != null && (
-              <span className="inline-flex w-fit items-center gap-1 font-mono text-xs text-ceniza">
+              <span className="inline-flex w-fit items-center gap-1 font-mono text-xs text-muted">
                 <Clock size={12} aria-hidden />
                 {formatMinutes(step.duration_minutes)}
               </span>
@@ -33,7 +34,7 @@ export function StepList({ steps }: { steps: RecipeStep[] }) {
                 src={step.image_url}
                 alt=""
                 loading="lazy"
-                className="mt-1 w-full max-w-md border border-ceniza/20 object-cover"
+                className="mt-1 w-full max-w-md rounded-card border border-line-strong object-cover"
               />
             )}
           </div>
