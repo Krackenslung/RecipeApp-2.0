@@ -33,25 +33,25 @@ export function Dialog({ dialogRef, title, onClose, children, footer }: Props) {
         if (e.target === dialogRef.current) dialogRef.current?.close();
       }}
     >
-      <div className="border border-ceniza/25 bg-cal">
-        <header className="flex items-start justify-between gap-4 border-b border-ceniza/20 px-5 py-4">
-          <h2 id="dialog-title" className="font-display text-lg font-black tracking-tight text-comal">
+      <div className="overflow-hidden rounded-card border border-line-strong bg-surface">
+        <header className="flex items-start justify-between gap-4 border-b border-hairline px-5 py-4">
+          <h2 id="dialog-title" className="text-lg font-semibold text-ink">
             {title}
           </h2>
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
             aria-label="Cerrar"
-            className="text-ceniza transition-colors hover:text-comal"
+            className="text-muted transition-colors hover:text-ink"
           >
             <X size={18} aria-hidden />
           </button>
         </header>
 
-        <div className="px-5 py-4 text-sm text-comal">{children}</div>
+        <div className="px-5 py-4 text-sm text-body">{children}</div>
 
         {footer && (
-          <footer className="flex justify-end gap-2 border-t border-ceniza/20 px-5 py-3">
+          <footer className="flex justify-end gap-2 border-t border-hairline px-5 py-3">
             {footer}
           </footer>
         )}

@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cx } from '@/utils/cx';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 type Size = 'sm' | 'md' | 'lg';
 
 /**
@@ -10,15 +10,16 @@ type Size = 'sm' | 'md' | 'lg';
  * writes these class strings — that is what stops them drifting across files.
  */
 const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-none font-body font-medium ' +
-  'transition-colors disabled:cursor-not-allowed disabled:opacity-45 select-none';
+  'inline-flex items-center justify-center gap-2 rounded-card font-medium ' +
+  'transition-colors disabled:cursor-not-allowed disabled:opacity-70 select-none';
 
 const VARIANTS: Record<Variant, string> = {
-  // guajillo is the single accent — one primary per screen.
-  primary: 'bg-guajillo text-cal hover:bg-comal',
-  secondary: 'border border-ceniza/40 bg-cal text-comal hover:border-comal',
-  ghost: 'text-ceniza hover:text-comal',
-  danger: 'border border-guajillo/50 text-guajillo hover:bg-guajillo hover:text-cal',
+  primary: 'bg-brand text-white hover:bg-brand-dark',
+  secondary: 'border border-line-strong bg-surface text-body hover:bg-hairline',
+  ghost: 'text-body hover:text-ink',
+  danger: 'border border-brand text-brand hover:bg-brand hover:text-white',
+  // A selected cost level. The filter toggles are the only caller.
+  success: 'bg-success text-white',
 };
 
 const SIZES: Record<Size, string> = {

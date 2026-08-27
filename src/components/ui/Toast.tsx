@@ -34,10 +34,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cx(
-              'animate-fade-in border px-4 py-2 text-sm shadow-none',
-              t.tone === 'success' && 'border-tomatillo bg-tomatillo text-cal',
-              t.tone === 'error' && 'border-guajillo bg-guajillo text-cal',
-              t.tone === 'info' && 'border-comal bg-comal text-cal',
+              'animate-fade-in rounded-card px-4 py-2 text-sm text-white',
+              t.tone === 'success' && 'bg-success',
+              t.tone === 'error' && 'bg-brand',
+              t.tone === 'info' && 'bg-ink',
             )}
           >
             {t.message}

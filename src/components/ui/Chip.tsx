@@ -6,17 +6,17 @@ type Tone = 'neutral' | 'diet' | 'accent';
 
 const TONES: Record<Tone, { off: string; on: string }> = {
   neutral: {
-    off: 'border-ceniza/30 text-ceniza hover:border-comal hover:text-comal',
-    on: 'border-comal bg-comal text-cal',
+    off: 'border-line-strong bg-surface text-body hover:bg-hairline',
+    on: 'border-brand bg-brand text-white',
   },
-  // tomatillo is for success and dietary badges only.
+  // Dietary badges carry the success green.
   diet: {
-    off: 'border-tomatillo/40 text-tomatillo hover:border-tomatillo',
-    on: 'border-tomatillo bg-tomatillo text-cal',
+    off: 'border-line-strong bg-surface text-body hover:bg-hairline',
+    on: 'border-success bg-success text-white',
   },
   accent: {
-    off: 'border-guajillo/40 text-guajillo hover:border-guajillo',
-    on: 'border-guajillo bg-guajillo text-cal',
+    off: 'border-line-strong bg-surface text-body hover:bg-hairline',
+    on: 'border-brand bg-brand text-white',
   },
 };
 
@@ -38,8 +38,8 @@ export function Chip({ selected = false, tone = 'neutral', onToggle, disabled, c
       disabled={disabled}
       aria-pressed={selected}
       className={cx(
-        'inline-flex items-center gap-1.5 border px-2.5 py-1 text-sm transition-colors',
-        'disabled:cursor-not-allowed disabled:opacity-45',
+        'inline-flex items-center gap-1.5 rounded-chip border px-2.5 py-1 text-sm transition-colors',
+        'disabled:cursor-not-allowed disabled:opacity-70',
         selected ? t.on : t.off,
       )}
     >
@@ -63,8 +63,8 @@ export function RemovableChip({
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 border px-2.5 py-1 text-sm',
-        TONES[tone].on,
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-chip px-2 py-0.5 text-xs',
+        tone === 'neutral' ? 'bg-hairline text-body' : TONES[tone].on,
       )}
     >
       {children}
@@ -72,9 +72,9 @@ export function RemovableChip({
         type="button"
         onClick={onRemove}
         aria-label={`Quitar ${label}`}
-        className="opacity-70 transition-opacity hover:opacity-100"
+        className="cursor-pointer opacity-70 transition-opacity hover:opacity-100"
       >
-        <X size={13} aria-hidden />
+        <X size={12} aria-hidden />
       </button>
     </span>
   );
@@ -85,10 +85,8 @@ export function Tag({ tone = 'neutral', children }: { tone?: Tone; children: Rea
   return (
     <span
       className={cx(
-        'inline-flex items-center border px-2 py-0.5 text-xs',
-        tone === 'diet'
-          ? 'border-tomatillo/40 text-tomatillo'
-          : 'border-ceniza/30 text-ceniza',
+        'inline-flex items-center whitespace-nowrap rounded-chip px-2 py-0.5 text-xs',
+        tone === 'diet' ? 'bg-hairline text-success' : 'bg-hairline text-body',
       )}
     >
       {children}

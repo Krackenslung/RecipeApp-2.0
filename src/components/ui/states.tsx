@@ -8,7 +8,7 @@ export function Spinner({ className }: { className?: string }) {
       role="status"
       aria-label="Cargando"
       className={cx(
-        'inline-block h-4 w-4 animate-spin rounded-full border-2 border-ceniza/40 border-t-comal',
+        'inline-block h-4 w-4 animate-spin rounded-full border-2 border-line-strong border-t-brand',
         className,
       )}
     />
@@ -21,12 +21,15 @@ export function Spinner({ className }: { className?: string }) {
  */
 export function SkeletonCard() {
   return (
-    <article className="border border-ceniza/20 bg-cal" aria-hidden>
-      <div className="aspect-[4/3] w-full animate-pulse bg-ceniza/15" />
+    <article
+      className="overflow-hidden rounded-card border border-line-strong bg-surface"
+      aria-hidden
+    >
+      <div className="h-[180px] w-full animate-pulse bg-hairline" />
       <div className="space-y-2 p-4">
-        <div className="h-4 w-3/4 animate-pulse bg-ceniza/15" />
-        <div className="h-3 w-full animate-pulse bg-ceniza/10" />
-        <div className="h-3 w-2/3 animate-pulse bg-ceniza/10" />
+        <div className="h-4 w-3/4 animate-pulse rounded-chip bg-hairline" />
+        <div className="h-3 w-full animate-pulse rounded-chip bg-hairline" />
+        <div className="h-3 w-2/3 animate-pulse rounded-chip bg-hairline" />
       </div>
     </article>
   );
@@ -34,7 +37,7 @@ export function SkeletonCard() {
 
 export function SkeletonGrid({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="flex flex-col gap-5">
       {Array.from({ length: count }, (_, i) => (
         <SkeletonCard key={i} />
       ))}
@@ -52,9 +55,9 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="border border-dashed border-ceniza/35 px-6 py-16 text-center">
-      <h2 className="font-display text-xl font-black tracking-tight text-comal">{title}</h2>
-      {message && <p className="mx-auto mt-2 max-w-md text-sm text-ceniza">{message}</p>}
+    <div className="rounded-card border border-dashed border-line-strong bg-surface px-6 py-16 text-center">
+      <h2 className="text-xl font-semibold text-ink">{title}</h2>
+      {message && <p className="mx-auto mt-2 max-w-md text-sm text-body">{message}</p>}
       {action && <div className="mt-5 flex justify-center">{action}</div>}
     </div>
   );
@@ -71,14 +74,14 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="border border-guajillo/35 bg-cal px-6 py-12 text-center">
-      <h2 className="font-display text-lg font-black tracking-tight text-guajillo">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-ceniza">{message}</p>
+    <div className="rounded-card border border-brand bg-surface px-6 py-12 text-center">
+      <h2 className="text-lg font-semibold text-brand">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-body">{message}</p>
       {onRetry && (
         <button
           type="button"
           onClick={onRetry}
-          className="mt-4 border border-ceniza/40 px-4 py-2 text-sm text-comal transition-colors hover:border-comal"
+          className="mt-4 rounded-card border border-line-strong bg-surface px-4 py-2 text-sm text-body transition-colors hover:bg-hairline"
         >
           Reintentar
         </button>
