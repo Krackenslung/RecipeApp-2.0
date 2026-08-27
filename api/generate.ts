@@ -19,11 +19,27 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { waitUntil } from '@vercel/functions';
 
 const MODEL = 'gemini-2.5-flash';
 const DAILY_LIMIT = 20;
-const GEMINI_TIMEOUT_MS = 60_000;
+/**
+ * These three are one decision, not three, and they have to stay ordered:
+ *
+ *   GEMINI_TIMEOUT_MS  <  BUDGET_MS  <  maxDuration in vercel.json
+ *
+ * The old 60s Gemini timeout was equal to the function's own ceiling, so the
+ * process was killed before its timeout could fire and gen_fail never ran —
+ * which is how a request ends up pending forever with no error_message. The
+ * budget leaves room to *record* the failure, which is the part that matters.
+ */
+const MAX_DURATION_S = 60;                          // must match vercel.json
+const BUDGET_MS = (MAX_DURATION_S - 10) * 1_000;   // whole background job
+const GEMINI_TIMEOUT_MS = 45_000; // one attempt
+const PERSIST_RESERVE_MS = 8_000; // never start an attempt without this much left
 const MAX_ATTEMPTS = 3;
+
+type Db = ReturnType<ReturnType<typeof createClient>['schema']>;
 
 /**
  * Structurally the client's RecipeFilters. Declared here rather than imported
@@ -235,15 +251,26 @@ type GeminiCall = {
  * malformed the second time too; retrying it just spends the user's latency
  * budget to arrive at the same answer.
  */
-async function callGemini(apiKey: string, prompt: string): Promise<GeminiCall> {
+async function callGemini(apiKey: string, prompt: string, deadline: number): Promise<GeminiCall> {
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
   let lastError = 'The model did not respond.';
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    // Three 45s attempts do not fit in a 60s function. Each attempt gets what
+    // is actually left, and none starts unless there is still time to write the
+    // outcome down afterwards.
+    const remaining = deadline - Date.now();
+    if (remaining <= PERSIST_RESERVE_MS) {
+      throw new GenerationFailure('failed', 'Ran out of time before the model answered.');
+    }
+
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+    const timer = setTimeout(
+      () => controller.abort(),
+      Math.min(GEMINI_TIMEOUT_MS, remaining - PERSIST_RESERVE_MS),
+    );
 
     try {
       const res = await fetch(url, {
@@ -264,7 +291,7 @@ async function callGemini(apiKey: string, prompt: string): Promise<GeminiCall> {
 
       if (res.status === 503 || res.status === 429) {
         lastError = `The model is busy (${res.status}).`;
-        if (attempt < MAX_ATTEMPTS) {
+        if (attempt < MAX_ATTEMPTS && deadline - Date.now() > PERSIST_RESERVE_MS + 2_000) {
           await new Promise((r) => setTimeout(r, attempt * 1_000));
           continue;
         }
@@ -305,7 +332,9 @@ async function callGemini(apiKey: string, prompt: string): Promise<GeminiCall> {
       if (e instanceof GenerationFailure) throw e;
       // AbortError and network faults land here.
       lastError = 'The model timed out.';
-      if (attempt >= MAX_ATTEMPTS) throw new GenerationFailure('failed', lastError);
+      if (attempt >= MAX_ATTEMPTS || deadline - Date.now() <= PERSIST_RESERVE_MS + 2_000) {
+        throw new GenerationFailure('failed', lastError);
+      }
       await new Promise((r) => setTimeout(r, attempt * 1_000));
     } finally {
       clearTimeout(timer);
@@ -450,12 +479,45 @@ async function run(req: VercelRequest, res: VercelResponse) {
   // recipe.get_generation_status().
   res.status(200).json({ data: { request_id: requestId }, quota_remaining: begin.remaining });
 
-  // --- 4 to 6. The slow half --------------------------------------------------
+  // Vercel freezes the process the moment the response is flushed, so the work
+  // below used to be cut off mid-flight: the row stayed 'pending' forever, with
+  // no tokens and no error_message, because neither gen_succeed nor gen_fail
+  // ever ran. waitUntil is what keeps the instance alive for it.
+  //
+  // The promise is passed already invoked, and deliberately not awaited —
+  // awaiting it here would put the slow half back in front of the response and
+  // undo the whole design.
+  waitUntil(runGeneration(db, requestId, userId, prompt, filters, geminiKey));
+}
+
+/**
+ * The slow half: Gemini, then persistence. Runs after the response has gone out,
+ * so it can never reply to the caller — every outcome is written to
+ * ai.generation_requests, which is what the client polls.
+ *
+ * It owns its own deadline. If the work cannot finish inside the budget it
+ * fails *deliberately*, with time left to record why, rather than being killed
+ * silently by the platform.
+ */
+async function runGeneration(
+  db: Db,
+  requestId: string,
+  userId: string,
+  prompt: string,
+  filters: Filters,
+  geminiKey: string,
+) {
   const startedAt = Date.now();
+  const deadline = startedAt + BUDGET_MS;
+
   try {
-    step('calling gemini', { model: MODEL });
-    const { parsed, raw, tokensIn, tokensOut } = await callGemini(geminiKey, buildPrompt(prompt, filters));
-    step('gemini parsed', { tokensIn, tokensOut });
+    step('calling gemini', { model: MODEL, budgetMs: BUDGET_MS });
+    const { parsed, raw, tokensIn, tokensOut } = await callGemini(
+      geminiKey,
+      buildPrompt(prompt, filters),
+      deadline,
+    );
+    step('gemini parsed', { tokensIn, tokensOut, elapsedMs: Date.now() - startedAt });
 
     const payload = parsed as { recipe?: Record<string, unknown> };
     if (!payload?.recipe?.title) {
@@ -479,10 +541,13 @@ async function run(req: VercelRequest, res: VercelResponse) {
     if (persistError) {
       console.error('[generate] gen_succeed', persistError);
       await fail(db, requestId, 'failed', 'The recipe could not be saved.', raw, startedAt);
+      return;
     }
+
+    step('done', { elapsedMs: Date.now() - startedAt });
   } catch (e) {
     const failure = e instanceof GenerationFailure ? e : null;
-    console.error('[generate] request', requestId, failure?.message ?? e);
+    console.error('[generate] request', requestId, redact(failure?.message ?? String(e)));
     await fail(
       db,
       requestId,
@@ -496,7 +561,7 @@ async function run(req: VercelRequest, res: VercelResponse) {
 
 /** The response is already sent by the time this runs, so it can only log. */
 async function fail(
-  db: ReturnType<ReturnType<typeof createClient>['schema']>,
+  db: Db,
   requestId: string,
   status: 'failed' | 'filtered',
   message: string,
