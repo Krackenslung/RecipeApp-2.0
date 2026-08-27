@@ -17,6 +17,7 @@ import { StepList } from '@/components/recipe/StepList';
 import { RatingStars } from '@/components/recipe/RatingStars';
 import { CommentThread } from '@/components/recipe/CommentThread';
 import { formatCost, formatDifficulty, formatMinutes, formatRating } from '@/utils/format';
+import noRecipeImage from '@/assets/no_recipe_image.png';
 
 export default function RecipeDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -179,19 +180,13 @@ export default function RecipeDetail() {
         </div>
 
         <div className="flex flex-col gap-4">
-          {recipe.cover_image_url ? (
-            <img
-              src={recipe.cover_image_url}
-              alt={recipe.title}
-              className="h-[260px] w-full rounded-card border border-line-strong object-cover"
-            />
-          ) : (
-            <div className="flex h-[260px] w-full items-center justify-center rounded-card border border-line-strong bg-surface">
-              <span className="text-6xl font-semibold text-muted">
-                {recipe.title.slice(0, 1)}
-              </span>
-            </div>
-          )}
+          <img
+            src={recipe.cover_image_url ?? noRecipeImage}
+            // The fallback carries no information about this recipe, so it
+            // stays decorative rather than announcing the title twice.
+            alt={recipe.cover_image_url ? recipe.title : ''}
+            className="h-[260px] w-full rounded-card border border-line-strong object-cover"
+          />
 
           {nutrition && (
             <dl className="grid grid-cols-4 overflow-hidden rounded-card border border-line-strong bg-surface text-center">

@@ -4,6 +4,7 @@ import type { RecipeCard as Card } from '@/queries/useRecipeSearch';
 import { Tag } from '@/components/ui/Chip';
 import { formatCost, formatMinutes, formatRating, splitAgg } from '@/utils/format';
 import { cx } from '@/utils/cx';
+import noRecipeImage from '@/assets/no_recipe_image.png';
 
 type Props = {
   recipe: Card;
@@ -25,20 +26,12 @@ export function RecipeCard({ recipe, saved, onToggleSave }: Props) {
     <article className="group relative flex cursor-pointer flex-col overflow-hidden rounded-card border border-line-strong bg-surface shadow-card">
       <Link to={`/r/${recipe.slug}`} className="flex flex-1 flex-col no-underline">
         <div className="h-[180px] w-full overflow-hidden bg-hairline">
-          {recipe.cover_image_url ? (
-            <img
-              src={recipe.cover_image_url}
-              alt=""
-              loading="lazy"
-              className="h-[180px] w-full object-cover"
-            />
-          ) : (
-            // PLACEHOLDER — no_recipe_image.png is not in src/assets/ yet.
-            // Until then, the initial over v1's grey.
-            <div className="flex h-full w-full items-center justify-center">
-              <span className="text-4xl font-bold text-muted">{recipe.title.slice(0, 1)}</span>
-            </div>
-          )}
+          <img
+            src={recipe.cover_image_url ?? noRecipeImage}
+            alt=""
+            loading="lazy"
+            className="h-[180px] w-full object-cover"
+          />
         </div>
 
         <div className="flex flex-1 flex-col gap-2 p-4">

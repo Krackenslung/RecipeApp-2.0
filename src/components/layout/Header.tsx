@@ -4,6 +4,7 @@ import { CircleUserRound, LogOut, Settings, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthProvider';
 import { useMyProfile } from '@/queries/useProfile';
 import { Button } from '@/components/ui/Button';
+import logo from '@/assets/recipes_powered_by_gemini_logo.png';
 
 /**
  * Logo on the left, who you are on the right. The nav links live in the
@@ -20,11 +21,7 @@ export function Header() {
   return (
     <header className="col-span-full row-start-1 sticky top-0 z-50 flex items-center justify-between border-b border-line bg-surface px-6">
       <Link to="/" className="flex items-center gap-2 no-underline">
-        {/* PLACEHOLDER — recipes_powered_by_gemini_logo.png is not in src/assets/
-            yet. Once the PNG is copied over from the v1 repo, this becomes
-            <img src={logo} alt="Recipes" className="h-9" />. */}
-        <span className="text-lg font-bold tracking-tight text-ink">Recipes</span>
-        <span className="text-xs text-muted">powered by Gemini</span>
+        <img src={logo} alt="Recipes powered by Gemini" className="h-9" />
       </Link>
 
       {user ? (
