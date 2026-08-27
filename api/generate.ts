@@ -680,6 +680,13 @@ async function runGeneration(
     payload.recipe.slug = slugify(String(payload.recipe.title));
     payload.recipe.language = payload.recipe.language ?? 'es';
 
+    // Set here rather than left to the procedure's default: whether a
+    // generation reaches the feed is a product decision, and this is the file
+    // that makes product decisions about generations. Flipping it back to
+    // draft/private is a one-line change on this side, with no migration.
+    payload.recipe.status = 'published';
+    payload.recipe.visibility = 'public';
+
     // Art before persistence, so the card has its picture the first time the
     // client renders it rather than popping in a poll later. Bounded by the
     // same deadline, and null on any failure.

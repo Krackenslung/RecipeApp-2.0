@@ -120,8 +120,8 @@ export default function Generate() {
         <header>
           <h1 className="text-3xl font-semibold tracking-tight text-ink">Generate a recipe</h1>
           <p className="mt-1 max-w-xl text-sm text-body">
-            Pick what you have and what you don’t want. Whatever comes out is yours, as a draft,
-            until you decide to publish it.
+            Pick what you have and what you don’t want. Whatever comes out is published to the
+            feed straight away — you can unpublish or edit it afterwards.
           </p>
         </header>
 
@@ -164,7 +164,7 @@ export default function Generate() {
           <section className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between">
               <h2 className="text-xl font-semibold text-ink">
-                {orderedCards.length === 1 ? 'Ready, as a draft' : `${orderedCards.length} drafts`}
+                {orderedCards.length === 1 ? 'Ready' : `${orderedCards.length} recipes`}
               </h2>
               {done && row?.status === 'success' && (
                 <Button
@@ -181,8 +181,8 @@ export default function Generate() {
             </div>
 
             <p className="text-sm text-body">
-              The model proposes, you publish. Open one to look it over and decide whether to make
-              it public.
+              Live on the feed already. Open one to look it over — you can edit or unpublish it
+              from the recipe itself.
             </p>
 
             {/* A list, not a grid: one recipe per generation today, and a
