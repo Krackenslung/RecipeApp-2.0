@@ -27,7 +27,10 @@ export function AppShell() {
   const flush = FLUSH_ROUTES.includes(pathname);
 
   return (
-    <div className="grid min-h-dvh grid-cols-[240px_1fr] grid-rows-[60px_1fr]">
+    /* h-dvh, not min-h-dvh: a sticky header inside a 60px grid row has no
+       travel to stick through. Pinning the grid to the viewport and letting
+       <main> be the scroller is what actually holds the chrome in place. */
+    <div className="grid h-dvh grid-cols-[240px_1fr] grid-rows-[60px_1fr]">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-card focus:bg-ink focus:px-3 focus:py-2 focus:text-surface"
@@ -46,8 +49,8 @@ export function AppShell() {
         className={cx(
           'col-start-2 row-start-2 bg-canvas',
           // Flush routes hand the height to their own panels so each side
-          // scrolls on its own; everything else scrolls with the document.
-          flush ? 'h-[calc(100dvh-60px)] overflow-hidden' : 'overflow-y-auto p-8',
+          // scrolls on its own; everything else just scrolls here.
+          flush ? 'overflow-hidden' : 'overflow-y-auto p-8',
         )}
       >
         <Outlet />
