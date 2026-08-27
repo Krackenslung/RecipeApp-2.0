@@ -25,14 +25,18 @@ repository**.
 |---|---|
 | Frontend (`src/`) | **Built** — 14 routes, 11 query hooks, full component library, UI in English |
 | Deployment | **Live** on Vercel, SPA rewrite in `vercel.json` |
-| `search_recipes()` RPC | Written, in `recipe_search.sql` at the repo root |
-| Database migrations | **Not in the repo.** The schema below is the specification |
+| Database migrations | **Written**, in `supabase/migrations/`. Never yet run against a real Postgres |
+| Catalog seed | **Written**, in `supabase/seed.sql` |
 | `src/types/database.ts` | **Hand-written** from the schema below, deliberately narrow. Becomes generated output the moment migrations exist |
 | `api/generate.ts` | **Not written.** `useGeneration.ts` already calls `POST /api/generate` |
-| Storage bucket + policies | **Not created** |
+| Storage bucket + policies | **Written**, in the storage migration |
 
 So `/generate` is the one screen that cannot work yet: the client half exists and the server half
-does not. Everything else runs against a Supabase project provisioned by hand from this spec.
+does not.
+
+The migrations have never been applied — they were written from this spec and from the types in
+`src/types/database.ts`, with no Postgres available to run them. Treat the first `supabase db reset`
+as the real review.
 
 ## Stack
 
@@ -118,7 +122,6 @@ so those need a wildcard pattern.
 ```
 Recipe App 2.0/
 ├── vercel.json                 # SPA rewrite
-├── recipe_search.sql           # the search_recipes() RPC
 ├── index.html
 ├── src/
 │   ├── assets/                 # logo + no_recipe_image fallback, from v1
@@ -132,11 +135,13 @@ Recipe App 2.0/
 │   ├── pages/{app,auth}/
 │   └── utils/                  # filterArgs, format, cx
 │
+├── supabase/
+│   ├── config.toml             # exposed schemas live here; `ai` is absent on purpose
+│   ├── migrations/             # forward-only, timestamped, checked in
+│   └── seed.sql                # catalog seeds
+│
 └── (not yet present)
-    ├── api/generate.ts         # THE ONLY server code. Holds GEMINI_API_KEY
-    └── supabase/
-        ├── migrations/         # forward-only, timestamped, checked in
-        └── seed.sql            # catalog seeds
+    └── api/generate.ts         # THE ONLY server code. Holds GEMINI_API_KEY
 ```
 
 Flat at the repo root — Vercel only auto-detects `api/` when it sits at the project root.
@@ -472,7 +477,8 @@ create view recipe.vw_recipe_cards with (security_invoker = true) as ...
 | `search_recipes(...)` | `recipe` | **invoker** | The main browse/filter query |
 | `count_recipes(...)` | `recipe` | invoker | Result count for pagination |
 | `persist_generation(payload jsonb)` | `ai` | definer | Transactional write of a generated recipe |
-| `get_generation_status(p_request_id uuid)` | `ai` | definer | The client's only window into `ai`. Returns status for rows owned by `auth.uid()` and nothing else |
+| `get_generation_status(p_request_id uuid)` | **`recipe`** | definer | The client's only window into `ai`. Lives in an exposed schema because PostgREST can only call what it can see; returns rows owned by `auth.uid()` and nothing else |
+| `increment_view_count(p_recipe_id uuid)` | `recipe` | definer | `view_count` is bumped by readers, who cannot update a recipe they don't own |
 
 ---
 
@@ -780,16 +786,15 @@ The UI is in **English** — all copy, `lang="en"`, `en-US` locales in `format.t
 
 # What's left to build
 
-1. `supabase init` and the migrations, in this order: `app` (3 tables + the `auth.users` trigger +
-   `has_role()`), `catalog` (11 tables) + `seed.sql`, `recipe` (10 tables + `vw_recipe_cards` +
-   `search_recipes()` from `recipe_search.sql`), `ai` (3 tables), `social` (9 tables + the two
-   aggregate triggers).
-2. `supabase gen types typescript --local > src/types/database.ts` to regenerate against the real
-   schema.
+1. Run the migrations for the first time: `supabase start` then `supabase db reset`. They have never
+   been executed, so expect this step to find things — it is the first real test of
+   `supabase/migrations/`.
+2. `supabase gen types typescript --local > src/types/database.ts` to replace the hand-written copy
+   with generated output, then `npm run typecheck` to see where the two disagreed.
 3. **Verify RLS by signing in as two users and confirming each sees only their own rows.** Before
    there is data worth leaking.
-4. `api/generate.ts` + the `ai.persist_generation` RPC.
-5. The `recipe-images` bucket and its policies.
+4. `api/generate.ts`, against the `ai.persist_generation(payload jsonb, p_author_id uuid)` contract
+   documented in that migration.
 
 # Open decisions
 

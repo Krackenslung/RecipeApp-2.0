@@ -1,0 +1,43 @@
+project_id = "recipe-app-2"
+
+[api]
+enabled = true
+port = 54321
+# The exposed-schema list. `ai` is deliberately absent: it holds prompts, raw
+# model output and quota counters, and is reached only by api/generate.ts with
+# service_role. Adding it here publishes all of that to anyone holding the anon
+# key, which is everyone.
+schemas = ["public", "app", "catalog", "recipe", "social"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+# Local development only. In the hosted project this stays on, and the signup
+# screen already handles the "no session yet, check your email" path.
+enable_confirmations = false
+
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+redirect_uri = ""
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"

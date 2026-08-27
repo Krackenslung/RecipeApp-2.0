@@ -1,5 +1,3 @@
--- supabase/migrations/<timestamp>_recipe_search.sql
---
 -- The main browse screen. Cannot be expressed through PostgREST query chaining:
 -- "has ALL of these ingredients" needs a HAVING count(distinct ...) = n, and
 -- embedded filters only give "has at least one of".
@@ -45,7 +43,11 @@ create or replace function recipe.search_recipes(
   p_search               text       default null,
   p_sort                 text       default 'recent',
   p_limit                integer    default 20,
-  p_offset               integer    default 0
+  p_offset               integer    default 0,
+  -- Not part of the sidebar: the screen sets it. /me passes the signed-in user,
+  -- the feed passes nothing. Added last so existing positional calls still line
+  -- up, though PostgREST always calls by name.
+  p_author_id            uuid       default null
 )
 returns setof recipe.vw_recipe_cards
 language sql
@@ -54,8 +56,12 @@ as $$
   select c.*
   from recipe.vw_recipe_cards c
   where
+    -- Author: the /me screen. RLS already limits this to what the caller may
+    -- see, so passing someone else's id returns their public recipes, not all.
+    (p_author_id is null or c.author_id = p_author_id)
+
     -- Cuisines: ANY of the selected (a recipe is rarely two cuisines at once)
-    (cardinality(p_cuisines) = 0 or exists (
+    and (cardinality(p_cuisines) = 0 or exists (
         select 1 from recipe.recipe_cuisines rc
          where rc.recipe_id = c.recipe_id
            and rc.cuisine_id = any (p_cuisines)))
