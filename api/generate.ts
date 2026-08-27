@@ -18,8 +18,28 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClientOptions } from '@supabase/supabase-js';
 import { waitUntil } from '@vercel/functions';
+import ws from 'ws';
+
+/**
+ * supabase-js constructs a RealtimeClient inside every createClient() call,
+ * whether or not realtime is ever used — and this function never uses it. On
+ * Node 20 there is no global WebSocket, so that constructor throws and takes
+ * the whole request with it before a single query runs.
+ *
+ * Node 22 has WebSocket natively, so on a modern runtime this resolves to
+ * undefined and nothing changes. It is the local dev server on Node 20, and any
+ * deployment pinned below 22, that need the polyfill.
+ */
+type RealtimeOptions = NonNullable<SupabaseClientOptions<'public'>['realtime']>;
+
+// ws and the DOM WebSocket disagree on the exact shape of onerror. The cast is
+// confined to this one line rather than spread across both call sites.
+const realtimeTransport: RealtimeOptions | undefined =
+  typeof (globalThis as { WebSocket?: unknown }).WebSocket === 'undefined'
+    ? ({ transport: ws } as unknown as RealtimeOptions)
+    : undefined;
 
 const MODEL = 'gemini-2.5-flash';
 const DAILY_LIMIT = 20;
@@ -413,6 +433,7 @@ async function run(req: VercelRequest, res: VercelResponse) {
   const asCaller = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false },
+    ...(realtimeTransport ? { realtime: realtimeTransport } : {}),
   });
 
   const { data: userData, error: userError } = await asCaller.auth.getUser();
@@ -436,6 +457,7 @@ async function run(req: VercelRequest, res: VercelResponse) {
 
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    ...(realtimeTransport ? { realtime: realtimeTransport } : {}),
   });
   const db = admin.schema('recipe');
 

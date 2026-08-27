@@ -18,13 +18,15 @@
     "lucide-react": "^0.451.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.0.0"
+    "react-router-dom": "^7.0.0",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^26.3.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/ws": "^8.18.1",
     "@vercel/node": "^9.0.1",
     "@vitejs/plugin-react": "^4.3.0",
     "supabase": "^2.116.0",
