@@ -56,31 +56,31 @@ export default function PublicProfile() {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-start gap-5">
-        <div className="h-20 w-20 shrink-0 overflow-hidden border border-ceniza/25 bg-cal">
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border border-line-strong bg-surface">
           {profile.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center font-display text-3xl font-black text-ceniza/30">
+            <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-muted">
               {(profile.display_name ?? profile.username).slice(0, 1).toUpperCase()}
             </div>
           )}
         </div>
 
         <div className="flex flex-1 flex-col gap-2">
-          <h1 className="font-display text-3xl font-black tracking-tight text-comal">
+          <h1 className="text-3xl font-semibold text-ink">
             {profile.display_name ?? profile.username}
           </h1>
-          <p className="font-mono text-sm text-ceniza">@{profile.username}</p>
-          {profile.bio && <p className="max-w-xl text-sm text-comal">{profile.bio}</p>}
+          <p className="font-mono text-sm text-body">@{profile.username}</p>
+          {profile.bio && <p className="max-w-xl text-sm text-ink">{profile.bio}</p>}
 
-          <dl className="flex gap-5 font-mono text-xs text-ceniza">
+          <dl className="flex gap-5 font-mono text-xs text-body">
             <div className="flex gap-1">
               <dt>Seguidores</dt>
-              <dd className="text-comal">{counts?.followers ?? '—'}</dd>
+              <dd className="text-ink">{counts?.followers ?? '—'}</dd>
             </div>
             <div className="flex gap-1">
               <dt>Sigue a</dt>
-              <dd className="text-comal">{counts?.following ?? '—'}</dd>
+              <dd className="text-ink">{counts?.following ?? '—'}</dd>
             </div>
           </dl>
         </div>
@@ -99,13 +99,13 @@ export default function PublicProfile() {
 
       {collections && collections.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-xl font-black tracking-tight text-comal">Colecciones</h2>
+          <h2 className="text-xl font-semibold text-ink">Colecciones</h2>
           <ul className="flex flex-wrap gap-2">
             {collections.map((c) => (
               <li key={c.collection_id}>
                 <Link
                   to={`/c/${c.collection_id}`}
-                  className="inline-flex border border-ceniza/30 px-3 py-1.5 text-sm text-ceniza transition-colors hover:border-comal hover:text-comal"
+                  className="inline-flex rounded-card border border-line-strong px-3 py-1.5 text-sm text-body no-underline transition-colors hover:bg-hairline hover:text-ink"
                 >
                   {c.name}
                 </Link>
@@ -116,7 +116,7 @@ export default function PublicProfile() {
       )}
 
       <section className="flex flex-col gap-4">
-        <h2 className="font-display text-xl font-black tracking-tight text-comal">Recetas</h2>
+        <h2 className="text-xl font-semibold text-ink">Recetas</h2>
 
         {query.isLoading ? (
           <SkeletonGrid />

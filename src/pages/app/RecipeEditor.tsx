@@ -66,7 +66,7 @@ export default function RecipeEditor() {
         title="Esta receta no es tuya"
         message="Solo quien la creó puede editarla."
         action={
-          <Link to={`/r/${recipe.slug}`} className="text-sm text-guajillo underline">
+          <Link to={`/r/${recipe.slug}`} className="text-sm text-brand underline">
             Ver la receta
           </Link>
         }
@@ -116,12 +116,12 @@ export default function RecipeEditor() {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-black tracking-tight text-comal">
+          <h1 className="text-3xl font-semibold text-ink">
             Editar receta
           </h1>
-          <p className="mt-1 text-sm text-ceniza">
+          <p className="mt-1 text-sm text-body">
             {isDraft ? 'Borrador privado' : 'Publicada'} ·{' '}
-            <Link to={`/r/${recipe.slug}`} className="text-guajillo underline">
+            <Link to={`/r/${recipe.slug}`} className="text-brand underline">
               Ver
             </Link>
           </p>
@@ -223,13 +223,13 @@ export default function RecipeEditor() {
         </SelectField>
 
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-ceniza">Foto</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-body">Foto</span>
 
           {form.coverImageUrl && (
             <img
               src={form.coverImageUrl}
               alt=""
-              className="aspect-[4/3] w-full max-w-xs border border-ceniza/20 object-cover"
+              className="h-[180px] w-full max-w-xs rounded-card border border-line-strong object-cover"
             />
           )}
 
@@ -265,11 +265,11 @@ export default function RecipeEditor() {
                 Quitar
               </Button>
             )}
-            <span className="text-xs text-ceniza">JPG, PNG, WebP o AVIF. Hasta 5 MB.</span>
+            <span className="text-xs text-body">JPG, PNG, WebP o AVIF. Hasta 5 MB.</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-ceniza/20 pt-5">
+        <div className="flex items-center justify-between gap-3 border-t border-line-strong pt-5">
           <Button type="button" variant="danger" size="sm" onClick={deleteDialog.show}>
             Eliminar receta
           </Button>

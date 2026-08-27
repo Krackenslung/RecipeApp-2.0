@@ -51,10 +51,11 @@ export default function Signup() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-8">
-      <h1 className="font-display text-3xl font-black tracking-tight text-comal">Crear cuenta</h1>
+    <div className="flex min-h-dvh w-full items-center justify-center p-4">
+      <div className="flex w-full max-w-[420px] flex-col gap-6 rounded-card border border-line-strong bg-surface px-8 py-10">
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">Crear cuenta</h1>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <TextField
           label="Usuario"
           required
@@ -84,18 +85,19 @@ export default function Signup() {
           onChange={(e) => setPassword(e.target.value)}
           error={error}
         />
-        <Button type="submit" variant="primary" loading={busy}>
-          Crear cuenta
-        </Button>
-      </form>
+          <Button type="submit" variant="primary" loading={busy}>
+            Crear cuenta
+          </Button>
+        </form>
 
-      <p className="text-sm text-ceniza">
-        ¿Ya tienes cuenta?{' '}
-        <Link to="/login" className="text-guajillo underline">
-          Entra
-        </Link>
-        .
-      </p>
+        <p className="text-sm text-body">
+          ¿Ya tienes cuenta?{' '}
+          <Link to="/login" className="text-brand no-underline hover:underline">
+            Entra
+          </Link>
+          .
+        </p>
+      </div>
     </div>
   );
 }

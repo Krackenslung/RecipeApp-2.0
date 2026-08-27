@@ -36,10 +36,10 @@ export default function MyRecipes() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-black tracking-tight text-comal">
+          <h1 className="text-3xl font-semibold text-ink">
             {profile?.display_name ?? profile?.username ?? 'Mis recetas'}
           </h1>
-          <p className="mt-1 text-sm text-ceniza">
+          <p className="mt-1 text-sm text-body">
             {recipes.length} {recipes.length === 1 ? 'receta' : 'recetas'}
             {drafts.length > 0 && ` · ${drafts.length} en borrador`}
           </p>

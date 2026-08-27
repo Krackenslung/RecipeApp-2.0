@@ -66,8 +66,8 @@ export default function Moderation() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-display text-3xl font-black tracking-tight text-comal">Moderación</h1>
-        <p className="mt-1 text-sm text-ceniza">
+        <h1 className="text-3xl font-semibold text-ink">Moderación</h1>
+        <p className="mt-1 text-sm text-body">
           {reports ? `${reports.length} sin resolver` : '…'}
         </p>
       </header>
@@ -83,28 +83,28 @@ export default function Moderation() {
           {reports.map((r) => (
             <li
               key={r.report_id}
-              className="flex flex-wrap items-start gap-4 border border-ceniza/20 bg-cal p-4"
+              className="flex flex-wrap items-start gap-4 rounded-card border border-line-strong bg-surface p-4"
             >
               <div className="flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="border border-ceniza/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ceniza">
+                  <span className="rounded-chip bg-hairline px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted">
                     {r.target_type}
                   </span>
-                  <span className="font-display text-base font-black tracking-tight text-comal">
+                  <span className="text-base font-semibold text-ink">
                     {r.reason}
                   </span>
-                  <span className="font-mono text-xs text-ceniza">{formatDate(r.created_at)}</span>
-                  <span className="text-xs text-ceniza">{STATUS_LABEL[r.status]}</span>
+                  <span className="font-mono text-xs text-body">{formatDate(r.created_at)}</span>
+                  <span className="text-xs text-body">{STATUS_LABEL[r.status]}</span>
                 </div>
 
-                {r.details && <p className="mt-1.5 text-sm text-comal">{r.details}</p>}
+                {r.details && <p className="mt-1.5 text-sm text-ink">{r.details}</p>}
 
                 {/* target_id is text and polymorphic — recipes are uuid,
                     comments are integer. Only a recipe has a screen to link to. */}
                 {r.target_type === 'recipe' && (
                   <Link
                     to={`/r/${r.target_id}`}
-                    className="mt-1.5 inline-block font-mono text-xs text-guajillo underline"
+                    className="mt-1.5 inline-block font-mono text-xs text-brand underline"
                   >
                     {r.target_id}
                   </Link>

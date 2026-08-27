@@ -42,10 +42,11 @@ export default function Login() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-8">
-      <h1 className="font-display text-3xl font-black tracking-tight text-comal">Entrar</h1>
+    <div className="flex min-h-dvh w-full items-center justify-center p-4">
+      <div className="flex w-full max-w-[420px] flex-col gap-6 rounded-card border border-line-strong bg-surface px-8 py-10">
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">Entrar</h1>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <TextField
           label="Correo"
           type="email"
@@ -63,24 +64,26 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           error={error}
         />
-        <Button type="submit" variant="primary" loading={busy}>
-          Entrar
-        </Button>
-      </form>
+          <Button type="submit" variant="primary" loading={busy}>
+            Entrar
+          </Button>
+        </form>
 
-      <div className="flex items-center gap-3 text-xs text-ceniza">
-        <span className="h-px flex-1 bg-ceniza/25" />o<span className="h-px flex-1 bg-ceniza/25" />
+        <div className="flex items-center gap-3 text-xs text-muted">
+          <span className="h-px flex-1 bg-line-strong" />o
+          <span className="h-px flex-1 bg-line-strong" />
+        </div>
+
+        <Button onClick={withGoogle}>Continuar con Google</Button>
+
+        <p className="text-sm text-body">
+          ¿No tienes cuenta?{' '}
+          <Link to="/signup" className="text-brand no-underline hover:underline">
+            Crea una
+          </Link>
+          .
+        </p>
       </div>
-
-      <Button onClick={withGoogle}>Continuar con Google</Button>
-
-      <p className="text-sm text-ceniza">
-        ¿No tienes cuenta?{' '}
-        <Link to="/signup" className="text-guajillo underline">
-          Crea una
-        </Link>
-        .
-      </p>
     </div>
   );
 }

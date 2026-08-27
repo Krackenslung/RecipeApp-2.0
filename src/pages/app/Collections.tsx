@@ -41,10 +41,10 @@ export default function Collections() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-black tracking-tight text-comal">
+          <h1 className="text-3xl font-semibold text-ink">
             Colecciones
           </h1>
-          <p className="mt-1 text-sm text-ceniza">
+          <p className="mt-1 text-sm text-body">
             {collections ? `${collections.length}` : '…'} en total
           </p>
         </div>
@@ -74,16 +74,16 @@ export default function Collections() {
             <li key={c.collection_id}>
               <Link
                 to={`/c/${c.collection_id}`}
-                className="flex h-full flex-col gap-2 border border-ceniza/20 bg-cal p-4 transition-colors hover:border-comal"
+                className="flex h-full flex-col gap-2 rounded-card border border-line-strong bg-surface p-4 transition-colors hover:border-brand"
               >
                 <div className="flex items-start gap-2">
-                  <h2 className="flex-1 font-display text-lg font-black tracking-tight text-comal">
+                  <h2 className="flex-1 text-lg font-semibold text-ink">
                     {c.name}
                   </h2>
-                  {!c.is_public && <Lock size={13} className="mt-1 text-ceniza" aria-label="Privada" />}
+                  {!c.is_public && <Lock size={13} className="mt-1 text-body" aria-label="Privada" />}
                 </div>
-                {c.description && <p className="line-clamp-2 text-sm text-ceniza">{c.description}</p>}
-                <span className="mt-auto font-mono text-xs text-ceniza">
+                {c.description && <p className="line-clamp-2 text-sm text-body">{c.description}</p>}
+                <span className="mt-auto font-mono text-xs text-body">
                   {formatDate(c.created_at)}
                 </span>
               </Link>

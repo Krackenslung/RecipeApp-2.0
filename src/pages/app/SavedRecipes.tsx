@@ -11,8 +11,8 @@ export default function SavedRecipes() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-display text-3xl font-black tracking-tight text-comal">Guardadas</h1>
-        <p className="mt-1 text-sm text-ceniza">
+        <h1 className="text-3xl font-semibold text-ink">Guardadas</h1>
+        <p className="mt-1 text-sm text-body">
           {recipes ? `${recipes.length} ${recipes.length === 1 ? 'receta' : 'recetas'}` : '…'}
         </p>
       </header>

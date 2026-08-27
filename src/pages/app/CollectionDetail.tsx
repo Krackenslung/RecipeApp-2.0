@@ -21,7 +21,7 @@ export default function CollectionDetail() {
         title="Esta colección no existe"
         message="O es privada y no es tuya."
         action={
-          <Link to="/" className="text-sm text-guajillo underline">
+          <Link to="/" className="text-sm text-brand underline">
             Volver a explorar
           </Link>
         }
@@ -39,17 +39,17 @@ export default function CollectionDetail() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="font-display text-3xl font-black tracking-tight text-comal">
+          <h1 className="text-3xl font-semibold text-ink">
             {collection.name}
           </h1>
           {!collection.is_public && (
-            <Lock size={16} className="text-ceniza" aria-label="Privada" />
+            <Lock size={16} className="text-body" aria-label="Privada" />
           )}
         </div>
         {collection.description && (
-          <p className="max-w-2xl text-sm text-ceniza">{collection.description}</p>
+          <p className="max-w-2xl text-sm text-body">{collection.description}</p>
         )}
-        <p className="font-mono text-xs text-ceniza">
+        <p className="font-mono text-xs text-body">
           {recipes.length} {recipes.length === 1 ? 'receta' : 'recetas'}
         </p>
       </header>
@@ -72,7 +72,7 @@ export default function CollectionDetail() {
                   onClick={() =>
                     remove.mutate({ collectionId: collection.collection_id, recipeId: r.recipe_id })
                   }
-                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center border border-ceniza/30 bg-cal text-ceniza transition-colors hover:border-guajillo hover:text-guajillo"
+                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-card border border-line-strong bg-surface text-body transition-colors hover:border-brand hover:text-brand"
                 >
                   <X size={15} aria-hidden />
                 </button>

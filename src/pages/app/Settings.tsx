@@ -51,10 +51,10 @@ export default function Settings() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-10">
-      <h1 className="font-display text-3xl font-black tracking-tight text-comal">Ajustes</h1>
+      <h1 className="text-3xl font-semibold text-ink">Ajustes</h1>
 
       <section className="flex flex-col gap-4">
-        <h2 className="font-display text-xl font-black tracking-tight text-comal">Perfil</h2>
+        <h2 className="text-xl font-semibold text-ink">Perfil</h2>
 
         <form
           className="flex flex-col gap-4"
@@ -101,12 +101,12 @@ export default function Settings() {
         </form>
       </section>
 
-      <section className="flex flex-col gap-4 border-t border-ceniza/20 pt-8">
+      <section className="flex flex-col gap-4 border-t border-line-strong pt-8">
         <div>
-          <h2 className="font-display text-xl font-black tracking-tight text-comal">
+          <h2 className="text-xl font-semibold text-ink">
             Dietas y alérgenos
           </h2>
-          <p className="mt-1 text-sm text-ceniza">
+          <p className="mt-1 text-sm text-body">
             Esto pre-llena los filtros cuando entras. Siempre puedes quitarlos en la búsqueda.
           </p>
         </div>
