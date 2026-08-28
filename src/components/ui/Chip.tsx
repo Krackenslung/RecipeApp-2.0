@@ -48,14 +48,23 @@ export function Chip({ selected = false, tone = 'neutral', onToggle, disabled, c
   );
 }
 
-/** A chosen value with a way out — ingredients picked from the autocomplete. */
+/**
+ * A chosen value with a way out — ingredients picked from the autocomplete.
+ *
+ * `provisional` marks something the user typed that is not in the catalog yet.
+ * A dashed border rather than a different colour: colour is already carrying
+ * include-vs-exclude, and stacking a second meaning on it would make neither
+ * legible. Dashed reads as "not settled" without competing.
+ */
 export function RemovableChip({
   tone = 'neutral',
+  provisional = false,
   onRemove,
   label,
   children,
 }: {
   tone?: Tone;
+  provisional?: boolean;
   onRemove: () => void;
   label: string;
   children: ReactNode;
@@ -64,7 +73,11 @@ export function RemovableChip({
     <span
       className={cx(
         'inline-flex items-center gap-1.5 whitespace-nowrap rounded-chip px-2 py-0.5 text-xs',
-        tone === 'neutral' ? 'bg-hairline text-body' : TONES[tone].on,
+        provisional
+          ? 'border border-dashed border-line-strong bg-surface text-body'
+          : tone === 'neutral'
+            ? 'bg-hairline text-body'
+            : TONES[tone].on,
       )}
     >
       {children}

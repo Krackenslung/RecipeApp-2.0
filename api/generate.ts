@@ -55,6 +55,14 @@ const MODEL = 'gemini-2.5-flash';
  */
 const IMAGE_MODEL = 'gemini-2.5-flash-image';
 const IMAGE_BUDGET_MS = 15_000;
+
+/**
+ * Paused. Every image model answers 429 RESOURCE_EXHAUSTED on the current key —
+ * they are billing-only — so each generation was spending a round trip to be
+ * told no. The code below is intact and reachable: flip this to true once
+ * billing is enabled in Google AI Studio, and nothing else has to change.
+ */
+const IMAGES_ENABLED = false;
 const DAILY_LIMIT = 20;
 /**
  * These three are one decision, not three, and they have to stay ordered:
@@ -91,6 +99,13 @@ type Db = ReturnType<Admin['schema']>;
 type Filters = {
   includeIngredients?: number[];
   excludeIngredients?: number[];
+  /**
+   * What the user typed that the catalog did not recognise. The 1.0 behaviour:
+   * anything you could type was a valid ingredient, and the model fixed the
+   * spelling. These arrive raw and misspelled by design.
+   */
+  includeIngredientNames?: string[];
+  excludeIngredientNames?: string[];
   cuisines?: number[];
   diets?: number[];
   mealTypes?: number[];
@@ -167,6 +182,23 @@ const RESPONSE_SCHEMA = {
         sodium_mg: { type: 'number' },
       },
     },
+    /**
+     * The free-text ingredients, cleaned up. Kept apart from `ingredients`
+     * because these are catalog candidates — persist_generation inserts the
+     * ones it does not already know — while `ingredients` describes this
+     * recipe and carries quantities.
+     */
+    corrected_ingredients: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['original', 'corrected'],
+        properties: {
+          original: { type: 'string' },
+          corrected: { type: 'string' },
+        },
+      },
+    },
     cuisines: { type: 'array', items: { type: 'string' } },
     diets: { type: 'array', items: { type: 'string' } },
     meal_types: { type: 'array', items: { type: 'string' } },
@@ -232,12 +264,39 @@ function buildPrompt(prompt: string, filters: Filters): string {
     'Responde SOLO con el JSON del esquema. Sin markdown, sin explicaciones.',
     '',
     'Reglas:',
-    '- Los nombres de ingredientes en singular y en español ("jitomate", no "Jitomates").',
+    '- Los nombres de ingredientes en inglés y en singular ("carrot", no "Carrots").',
     '- unit_code debe ser uno de: g, kg, ml, l, tbsp, tsp, cup, oz, lb, pza, pizca.',
     '- cuisines, diets, meal_types y equipment son slugs del catálogo, en minúsculas.',
     '- est_cost es el total estimado de la receta en MXN, no por porción.',
     '- difficulty va de 1 (fácil) a 3 (difícil).',
   ];
+
+  // Free text, verbatim. The model is told to clean it up and hand the result
+  // back separately, which is how a typo becomes a catalog row instead of a
+  // dead end. This is instruction 4 of the 1.0 prompt.
+  const free = [...(filters.includeIngredientNames ?? []), ...(filters.excludeIngredientNames ?? [])]
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+  if (free.length) {
+    lines.push(
+      '',
+      'El usuario escribió estos ingredientes a mano y pueden traer faltas de',
+      'ortografía, plurales o estar en otro idioma:',
+      ...free.map((n) => `  - ${JSON.stringify(n)}`),
+      '',
+      'Para cada uno, devuelve en corrected_ingredients un objeto con `original`',
+      '(exactamente como lo escribió) y `corrected` (en inglés, singular,',
+      'minúsculas, sin acentos: "carrots"/"Carrot "/"carot" -> "carrot";',
+      '"zanahoria" -> "carrot"). Corrige también cocinas y dietas mal escritas.',
+      'Si algo no es un ingrediente, omítelo de corrected_ingredients.',
+    );
+  }
+
+  const include = (filters.includeIngredientNames ?? []).filter((n) => n.trim());
+  const exclude = (filters.excludeIngredientNames ?? []).filter((n) => n.trim());
+  if (include.length) lines.push('', `Debe incluir: ${include.join(', ')}.`);
+  if (exclude.length) lines.push(`No debe contener: ${exclude.join(', ')}.`);
 
   if (prompt.trim()) lines.push('', `Petición del usuario: ${prompt.trim()}`);
 
@@ -398,6 +457,8 @@ async function generateImage(
   title: string,
   deadline: number,
 ): Promise<{ bytes: Buffer; mime: string } | null> {
+  if (!IMAGES_ENABLED) return null;
+
   const remaining = deadline - Date.now();
   if (remaining < 3_000) {
     step('image skipped', { reason: 'no time left' });
@@ -686,6 +747,29 @@ async function runGeneration(
     // draft/private is a one-line change on this side, with no migration.
     payload.recipe.status = 'published';
     payload.recipe.visibility = 'public';
+
+    // corrected_ingredients rides along in p_payload already — persist_generation
+    // receives the whole parsed object. Cleaned first so the procedure is handed
+    // catalog-ready values rather than whatever shape the model felt like:
+    // trimmed, lowercased, de-duplicated, and with anything unusable dropped.
+    // A bad row here would become a bad row in catalog.ingredients, which every
+    // future generation then matches against.
+    const corrections = new Map<string, string>();
+    const rawCorrections = (payload as { corrected_ingredients?: unknown }).corrected_ingredients;
+    for (const entry of Array.isArray(rawCorrections) ? rawCorrections : []) {
+      const item = entry as { original?: unknown; corrected?: unknown };
+      const original = typeof item.original === 'string' ? item.original.trim() : '';
+      const corrected =
+        typeof item.corrected === 'string' ? item.corrected.trim().toLowerCase() : '';
+      if (!original || !corrected || corrected.length > 60) continue;
+      corrections.set(corrected, original);
+    }
+
+    (payload as { corrected_ingredients?: unknown }).corrected_ingredients = [
+      ...corrections.entries(),
+    ].map(([corrected, original]) => ({ original, corrected }));
+
+    step('corrections', { count: corrections.size });
 
     // Art before persistence, so the card has its picture the first time the
     // client renders it rather than popping in a poll later. Bounded by the

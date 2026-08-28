@@ -19,11 +19,29 @@ type Props = {
   tone?: 'neutral' | 'accent';
   value: number[];
   onChange: (next: number[]) => void;
+  /**
+   * Free text the user typed that the catalog does not know. Only meaningful
+   * where the filters feed a generation — see `allowFreeText`.
+   */
+  names?: string[];
+  onNamesChange?: (next: string[]) => void;
+  /**
+   * Off by default, and off on the feed. search_recipes() joins on
+   * ingredient_id, so a typed name cannot narrow a search: offering it there
+   * would put a chip on screen that changes nothing, which is worse than the
+   * silence it replaces. On /generate the model reads the raw text, so it is
+   * real input.
+   */
+  allowFreeText?: boolean;
 };
 
 /**
- * Stores ingredient_id, never the name. The label is display only — a name sent
- * to search_recipes() silently matches nothing.
+ * Catalog matches are stored as ingredient_id, never as a name — a name sent to
+ * search_recipes() silently matches nothing.
+ *
+ * Anything the catalog does not recognise can still be added, as free text, the
+ * way 1.0 worked: you typed an ingredient and the model sorted out the
+ * spelling. Those travel separately and are visibly provisional.
  */
 export function IngredientAutocomplete({
   label,
@@ -31,6 +49,9 @@ export function IngredientAutocomplete({
   tone = 'neutral',
   value,
   onChange,
+  names = [],
+  onNamesChange,
+  allowFreeText = false,
 }: Props) {
   const [term, setTerm] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -66,12 +87,37 @@ export function IngredientAutocomplete({
     return () => document.removeEventListener('mousedown', onClickAway);
   }, []);
 
-  function add(id: number) {
-    if (!value.includes(id)) onChange([...value, id]);
+  const typed = term.trim();
+  // Only once the debounce has caught up, or the message flashes "no matches"
+  // against a stale result set on every keystroke.
+  const settled = debounced.trim() === typed && !isFetching;
+  const noMatches = typed.length > 1 && settled && options.length === 0;
+  const alreadyAdded = names.some((n) => n.toLowerCase() === typed.toLowerCase());
+  const canAddFreeText = allowFreeText && noMatches && !alreadyAdded && Boolean(onNamesChange);
+
+  function reset() {
     setTerm('');
     setDebounced('');
     setOpen(false);
     setActive(0);
+  }
+
+  function add(id: number) {
+    if (!value.includes(id)) onChange([...value, id]);
+    reset();
+  }
+
+  function addFreeText() {
+    if (!canAddFreeText || !onNamesChange) return;
+    onNamesChange([...names, typed]);
+    reset();
+  }
+
+  /** What the `+` and Enter both do: whichever of the two is available. */
+  function commit() {
+    const hit = options[active] ?? options[0];
+    if (hit) add(hit.ingredient_id);
+    else addFreeText();
   }
 
   return (
@@ -99,6 +145,11 @@ export function IngredientAutocomplete({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+              return;
+            }
             if (!options.length) return;
             if (e.key === 'ArrowDown') {
               e.preventDefault();
@@ -106,10 +157,6 @@ export function IngredientAutocomplete({
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
               setActive((i) => (i - 1 + options.length) % options.length);
-            } else if (e.key === 'Enter') {
-              e.preventDefault();
-              const hit = options[active];
-              if (hit) add(hit.ingredient_id);
             } else if (e.key === 'Escape') {
               setOpen(false);
             }
@@ -122,12 +169,9 @@ export function IngredientAutocomplete({
 
         <button
           type="button"
-          aria-label={`Agregar a ${label.toLowerCase()}`}
-          disabled={options.length === 0}
-          onClick={() => {
-            const hit = options[active] ?? options[0];
-            if (hit) add(hit.ingredient_id);
-          }}
+          aria-label={`Add to ${label.toLowerCase()}`}
+          disabled={options.length === 0 && !canAddFreeText}
+          onClick={commit}
           className={GROUP_BUTTON}
         >
           <Plus size={16} aria-hidden />
@@ -154,7 +198,30 @@ export function IngredientAutocomplete({
         )}
       </div>
 
-      {value.length > 0 && (
+      {/* Previously the + went grey and nothing on screen said why. */}
+      {noMatches && (
+        <p className="text-xs text-muted">
+          {alreadyAdded ? (
+            <>“{typed}” is already on the list.</>
+          ) : canAddFreeText ? (
+            <>
+              Nothing in the catalog matches “{typed}”.{' '}
+              <button
+                type="button"
+                onClick={addFreeText}
+                className="cursor-pointer text-brand underline"
+              >
+                Add it anyway
+              </button>{' '}
+              — the model will fix the spelling.
+            </>
+          ) : (
+            <>Nothing in the catalog matches “{typed}”. Only known ingredients can be searched.</>
+          )}
+        </p>
+      )}
+
+      {(value.length > 0 || names.length > 0) && (
         <div className="flex flex-wrap gap-1.5">
           {value.map((id) => (
             <RemovableChip
@@ -164,6 +231,19 @@ export function IngredientAutocomplete({
               onRemove={() => onChange(value.filter((v) => v !== id))}
             >
               {labels.get(id) ?? `#${id}`}
+            </RemovableChip>
+          ))}
+
+          {/* Dashed: in the sidebar but not in the catalog, and not yet spelled
+              the way the catalog will end up spelling it. */}
+          {names.map((name) => (
+            <RemovableChip
+              key={`free-${name}`}
+              provisional
+              label={name}
+              onRemove={() => onNamesChange?.(names.filter((n) => n !== name))}
+            >
+              {name}
             </RemovableChip>
           ))}
         </div>

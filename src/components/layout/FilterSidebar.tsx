@@ -33,6 +33,12 @@ type Props = {
   /** Ids seeded from the user's saved preferences, shown as such rather than hidden. */
   seededDiets?: number[];
   seededAllergens?: number[];
+  /**
+   * Let the user add ingredients the catalog does not know. On for /generate,
+   * where the model reads them; off for the feed, where search_recipes() joins
+   * on ingredient_id and a typed name could not narrow anything.
+   */
+  allowFreeText?: boolean;
 };
 
 export function FilterSidebar({
@@ -44,6 +50,7 @@ export function FilterSidebar({
   searching = false,
   seededDiets = [],
   seededAllergens = [],
+  allowFreeText = false,
 }: Props) {
   const { cuisines, diets, allergens, mealTypes, equipment, isLoading } = useCatalog();
   const set = <K extends keyof RecipeFilters>(key: K, value: RecipeFilters[K]) =>
@@ -114,6 +121,9 @@ export function FilterSidebar({
             label="With these ingredients"
             value={draft.includeIngredients}
             onChange={(v) => set('includeIngredients', v)}
+            names={draft.includeIngredientNames}
+            onNamesChange={(v) => set('includeIngredientNames', v)}
+            allowFreeText={allowFreeText}
           />
 
           <IngredientAutocomplete
@@ -122,6 +132,9 @@ export function FilterSidebar({
             placeholder="Ingredient to exclude"
             value={draft.excludeIngredients}
             onChange={(v) => set('excludeIngredients', v)}
+            names={draft.excludeIngredientNames}
+            onNamesChange={(v) => set('excludeIngredientNames', v)}
+            allowFreeText={allowFreeText}
           />
 
           <TagGroup

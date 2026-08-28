@@ -14,6 +14,16 @@ export type SortKey = 'recent' | 'rating' | 'quick' | 'cheap' | 'popular';
 export type RecipeFilters = {
   includeIngredients: number[]; // catalog.ingredients.ingredient_id
   excludeIngredients: number[];
+  /**
+   * Free text the user typed that matched nothing in the catalog. Kept apart
+   * from the ids on purpose: these cannot be sent to search_recipes(), which
+   * joins on ingredient_id and has no parameter for a name. They exist only to
+   * reach api/generate.ts, which passes them to the model for spelling
+   * correction — the 1.0 behaviour, where anything you could type was a valid
+   * ingredient.
+   */
+  includeIngredientNames: string[];
+  excludeIngredientNames: string[];
   cuisines: number[];
   diets: number[];
   mealTypes: number[];
@@ -36,6 +46,8 @@ export const PAGE_SIZE = 20;
 export const EMPTY_FILTERS: RecipeFilters = {
   includeIngredients: [],
   excludeIngredients: [],
+  includeIngredientNames: [],
+  excludeIngredientNames: [],
   cuisines: [],
   diets: [],
   mealTypes: [],
@@ -79,6 +91,12 @@ export function toRpcArgs(
   if (f.search.trim()) args.p_search = f.search.trim();
   if (f.sort !== 'recent') args.p_sort = f.sort;
   if (authorId) args.p_author_id = authorId;
+
+  // includeIngredientNames / excludeIngredientNames are deliberately absent.
+  // search_recipes() takes integer[] and joins on ingredient_id; there is no
+  // parameter that accepts a name, and PostgREST resolves RPCs by argument
+  // name, so inventing one would fail the call outright rather than be ignored.
+  // Free text is for generation only.
   return args;
 }
 
@@ -99,8 +117,10 @@ export const COMBINATOR: Record<string, 'ANY' | 'ALL' | 'NONE'> = {
 /** Number of dimensions the user has actually constrained. Shown next to the result count. */
 export function countActive(f: RecipeFilters): number {
   let n = 0;
-  n += f.includeIngredients.length ? 1 : 0;
-  n += f.excludeIngredients.length ? 1 : 0;
+  // Counted even though they never reach the RPC: the user set them, and the
+  // count is a statement about the sidebar, not about the query.
+  n += f.includeIngredients.length || f.includeIngredientNames.length ? 1 : 0;
+  n += f.excludeIngredients.length || f.excludeIngredientNames.length ? 1 : 0;
   n += f.cuisines.length ? 1 : 0;
   n += f.diets.length ? 1 : 0;
   n += f.mealTypes.length ? 1 : 0;

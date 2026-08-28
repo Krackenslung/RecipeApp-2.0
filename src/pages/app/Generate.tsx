@@ -87,6 +87,8 @@ export default function Generate() {
           onReset={() => setFilters(EMPTY_FILTERS)}
           dirty={!running}
           searching={start.isPending || running}
+          // Only here. The model reads whatever you type; the feed cannot.
+          allowFreeText
         />
       }
       footer={
